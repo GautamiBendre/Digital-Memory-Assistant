@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema(
             lowercase:true,
             trim:true,
         },
-        phoneNumber: {
+        phone: {
             type: String, //Phone numbers are identifiers, not values you perform calculations on.
             required: true,
             trim: true,
