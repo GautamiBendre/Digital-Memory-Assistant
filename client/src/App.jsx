@@ -10,10 +10,12 @@
 }
 
 export default App; */
+import Registration from "./pages/Registration";
 import Login from "./pages/Login";
 
 function App() {
-  return <Login />;
+  return <Registration />;
+  //return <Login />;
 }
 
 export default App;
