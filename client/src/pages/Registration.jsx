@@ -11,10 +11,11 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div className="min-h-screen w-full flex">
+    <div className="min-h-screen w-full bg-[#F3F1F9] flex gap-0">
 
       {/* Left Section - gradient block */}
-      <div className="w-1/2 bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500 flex items-center justify-center p-8">
+      
+      <div className="w-1/2 rounded-3xl bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500 flex items-center justify-center p-8 my-4 ml-5">
         <div className="max-w-md text-white">
 
           <h2 className="text-2xl font-bold leading-tight mb-1 mt-1">
@@ -68,8 +69,8 @@ const Register = () => {
       </div>
 
       {/* Right Section */}
-      <div className="w-1/2 bg-[#F3F1F9] flex items-center justify-center">
-        <div className="w-full max-w-xs p-5">
+      <div className="w-1/2 bg-[#F3F1F9] flex items-center justify-start ml-8">
+        <div className="w-full max-w-xs p-5 ml-2">
 
           {/* Logo + brand */}
           <div className="flex items-center gap-2 mb-2.5">
