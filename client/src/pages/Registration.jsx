@@ -6,9 +6,65 @@ import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
 import { PiWalletFill } from "react-icons/pi";
 import { FiUser } from "react-icons/fi";
 import { IoShieldCheckmarkOutline, IoNotificationsOutline, IoCloudUploadOutline } from "react-icons/io5";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
+      name: "",
+      email: "",
+      phone: "",
+      password: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+    const handleChange = (e) => {
+      const { name, value } = e.target;
+
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    };
+
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      console.log("Submit Clicked");
+
+      try {
+        setLoading(true);
+
+        const response = await axios.post(
+          "http://localhost:5000/api/auth/register",
+          formData
+        );
+
+        console.log(response.data);
+
+        alert("Registration Successful!");
+
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          password: "",
+        });
+
+        navigate("/");
+
+      } catch (error) {
+        console.error(error);
+
+        alert(
+          error.response?.data?.message || "Registration Failed"
+        );
+
+      } finally {
+        setLoading(false);
+      }
+    };
 
   return (
     <div className="min-h-screen w-full bg-[#F3F1F9] flex gap-0">
@@ -90,7 +146,7 @@ const Register = () => {
             Sign up to start saving your digital wallet.
           </p>
 
-          <form onSubmit={(e) => e.preventDefault()} className="space-y-2.5">
+          <form onSubmit={handleSubmit} className="space-y-2.5">
 
             {/* Name */}
             <div>
@@ -101,6 +157,9 @@ const Register = () => {
                 <FiUser className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
+                  name ="name"
+                  value={formData.name}
+                  onChange={handleChange}
                   placeholder="Enter your full name"
                   className="w-full h-[24px] bg-[#EAE7F5] border border-transparent rounded-lg pl-8 pr-3 py-1.5 text-[11px] text-slate-800 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
                 />
@@ -116,6 +175,9 @@ const Register = () => {
                 <MdOutlineEmail className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
                   placeholder="you@example.com"
                   className="w-full h-[24px] bg-[#EAE7F5] border border-transparent rounded-lg pl-8 pr-3 py-1.5 text-[11px] text-slate-800 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
                 />
@@ -131,6 +193,9 @@ const Register = () => {
                 <MdOutlinePhone className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
                   placeholder="Enter your phone number"
                   className="w-full h-[24px] bg-[#EAE7F5] border border-transparent rounded-lg pl-8 pr-3 py-1.5 text-[11px] text-slate-800 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
                 />
@@ -146,6 +211,9 @@ const Register = () => {
                 <RiLockPasswordLine className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
                   placeholder="Create a password"
                   className="w-full h-[24px] bg-[#EAE7F5] border border-transparent rounded-lg pl-8 pr-8 py-1.5 text-[11px] text-slate-800 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
                 />
@@ -167,9 +235,10 @@ const Register = () => {
             {/* Submit */}
             <button
               type="submit"
+              disabled={loading}
               className="w-full rounded-lg py-2 text-white font-semibold text-[11px] bg-gradient-to-r from-violet-700 via-purple-600 to-fuchsia-500 hover:brightness-105 active:brightness-95 transition shadow-sm"
             >
-              Create account
+              {loading ? "Creating..." : "Create Account"}
             </button>
           </form>
 
@@ -178,6 +247,7 @@ const Register = () => {
             Already have an account?{" "}
             <button
               type="button"
+              onClick={() => navigate("/")}
               className="font-semibold text-violet-600 hover:text-violet-700"
             >
               Sign in

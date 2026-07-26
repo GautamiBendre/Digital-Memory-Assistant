@@ -1,21 +1,19 @@
-/*function App() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100">
-      <h1 className="text-4xl font-bold text-blue-600">
-        Digital Memory Assistant
-      </h1>
-    </div> 
-    return <Login />;
-  );
-}
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-export default App; */
-import Registration from "./pages/Registration";
 import Login from "./pages/Login";
+import Registration from "./pages/Registration";
+import Dashboard from "./pages/Dashboard";
 
 function App() {
-  return <Registration />;
-  //return <Login />;
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/register" element={<Registration />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
 export default App;
