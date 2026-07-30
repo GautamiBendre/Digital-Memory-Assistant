@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Sidebar from "../components/Sidebar";
+import PasswordModal from "../components/PasswordModal";
 
 import {
   MdOutlineSearch,
@@ -52,6 +53,7 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   const loggedInUser = JSON.parse(localStorage.getItem("user")) || {};
 
@@ -326,7 +328,7 @@ export default function ProfilePage() {
                     </span>
 
                     <button
-                    onClick={startEdit}
+                    onClick={() => setShowPasswordModal(true)}
                     className="text-[11px] font-medium text-violet-600 hover:text-violet-700"
                     >
                     Change
@@ -351,6 +353,10 @@ export default function ProfilePage() {
 
       
       </main>
+      <PasswordModal
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+      />
     </div>
   );
 }
