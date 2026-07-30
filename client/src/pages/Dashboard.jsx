@@ -99,6 +99,8 @@ function WalletIllustration() {
 
 export default function DashboardHome() {
 
+  const user = JSON.parse(localStorage.getItem("user")) || {};
+
   return (
     <div className="min-h-screen w-full flex bg-[#F3F1F9]">
 
@@ -126,10 +128,13 @@ export default function DashboardHome() {
             </button>
 
             <button className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-600 to-purple-500 flex items-center justify-center text-white text-xs font-bold">
-                G
+             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-600 to-purple-500 flex items-center justify-center text-white text-xs font-bold">
+                {user?.name?.charAt(0).toUpperCase() || "U"}
               </div>
-              <span className="text-sm font-semibold text-slate-800">Gautami</span>
+
+              <span className="text-sm font-semibold text-slate-800">
+                {user?.name || "User"}
+              </span>
               <MdOutlineKeyboardArrowDown className="w-4 h-4 text-slate-400" />
             </button>
           </div>
@@ -137,9 +142,9 @@ export default function DashboardHome() {
         {/* Hero banner */}
         <div className="rounded-2xl bg-purple-200 p-8 flex items-center justify-between overflow-hidden">
           <div className="max-w-md">
-            <h1 className="text-[18px] font-bold text-slate-900 flex items-center gap-1 ">
-            Hello, Gautami! <span>👋</span>
-          </h1>
+            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+              Hello, {user?.name || "User"}! <span>👋</span>
+            </h1>
           <p className="text-sm text-slate-500 mt-0">
             Welcome to your Digital Memory Assistant
           </p>

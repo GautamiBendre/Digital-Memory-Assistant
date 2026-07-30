@@ -24,15 +24,27 @@ import { RiShieldCheckLine } from "react-icons/ri";
 const API_BASE = "/api/profile";
 
 async function saveProfileToServer(payload) {
-  // This calls your backend, which should update the database.
-  // If `password` is included, hash it server-side — never store plain text.
+  const token = localStorage.getItem("token");
+
   const res = await fetch(API_BASE, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error("Failed to update profile");
-  return res.json();
+
+  console.log("Status:", res.status);
+
+  const text = await res.text();
+  console.log("Response:", text);
+
+  if (!res.ok) {
+    throw new Error(text || "Failed to update profile");
+  }
+
+  return text ? JSON.parse(text) : {};
 }
 
 export default function ProfilePage() {
@@ -41,11 +53,13 @@ export default function ProfilePage() {
   const [saveError, setSaveError] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
 
+  const loggedInUser = JSON.parse(localStorage.getItem("user")) || {};
+
   const [profile, setProfile] = useState({
-    fullName: "Gautami",
-    email: "student1@gmail.com",
-    phone: "+91 98765 43210",
-    password: "",
+  fullName: loggedInUser.name || "",
+  email: loggedInUser.email || "",
+  phone: loggedInUser.phone || "",
+  password: "",
   });
 
   // Snapshot to revert to if the user cancels editing
@@ -82,12 +96,26 @@ export default function ProfilePage() {
 
       await saveProfileToServer(payload);
 
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          ...loggedInUser,
+          name: draft.fullName,
+          email: draft.email,
+          phone: draft.phone,
+        })
+      );
+
       setProfile({ ...draft, password: "" });
       setEditing(false);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
-      setSaveError("Couldn't save changes. Please try again.");
+      console.error(err);
+
+      setSaveError(
+        err.message || "Couldn't save changes. Please try again."
+      );
     } finally {
       setSaving(false);
     }
@@ -105,11 +133,35 @@ export default function ProfilePage() {
   };
 
   const infoRows = [
-    { key: "fullName", label: "Full Name", icon: FiUser, type: "text" },
-    { key: "email", label: "Email Address", icon: MdOutlineEmail, type: "email" },
-    { key: "phone", label: "Phone Number", icon: MdOutlinePhone, type: "tel" },
-    { key: "password", label: "Password", icon: MdOutlineLock, type: "password", placeholder: "Leave blank to keep current password" },
-  ];
+  {
+    key: "fullName",
+    label: "Full Name",
+    icon: FiUser,
+    type: "text",
+    editable: true,
+  },
+  {
+    key: "email",
+    label: "Email",
+    icon: MdOutlineEmail,
+    type: "email",
+    editable: false,
+  },
+  {
+    key: "phone",
+    label: "Phone Number",
+    icon: MdOutlinePhone,
+    type: "tel",
+    editable: true,
+  },
+  {
+    key: "password",
+    label: "Password",
+    icon: MdOutlineLock,
+    type: "password",
+    editable: false,
+  },
+];
 
   return (
     <div className="min-h-screen w-full flex bg-[#F3F1F9]">
@@ -128,7 +180,7 @@ export default function ProfilePage() {
 
             <div className="relative">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-fuchsia-500 text-2xl font-bold text-white shadow">
-                G
+                {profile.fullName?.charAt(0).toUpperCase() || "U"}
                 </div>
 
                 <button className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow hover:bg-violet-50">
@@ -241,7 +293,7 @@ export default function ProfilePage() {
 
         <div className="space-y-2">
 
-            {infoRows.map(({ key, label, icon: Icon, type, placeholder }) => (
+          {infoRows.map(({ key, label, icon: Icon, type, placeholder, editable }) => (
             <div
                 key={key}
                 className="flex items-center justify-between rounded-lg border border-violet-100 bg-[#FBFAFF] px-3 py-1.5"
@@ -259,7 +311,7 @@ export default function ProfilePage() {
 
                 </div>
 
-                {editing ? (
+               {editing && editable ? (
                 <input
                     type={type}
                     value={draft[key]}

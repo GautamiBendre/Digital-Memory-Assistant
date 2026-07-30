@@ -20,7 +20,9 @@ const protect = async (req, res, next) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
         // Store logged-in user ID in request object
-        req.user = decoded.id;
+        req.user = {
+        id: decoded.id,
+        };
 
         // Move to the next middleware/controller
         next();
