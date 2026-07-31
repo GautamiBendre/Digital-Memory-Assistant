@@ -8,8 +8,7 @@ import {
 } from "react-icons/md";
 import { FiUser } from "react-icons/fi";
 import { PiWalletFill } from "react-icons/pi";
-import { useNavigate } from "react-router-dom";
-
+import { useNavigate, useLocation } from "react-router-dom";
 import ConfirmLogoutModal from "./ConfirmLogoutModal";
 
 const navItems = [
@@ -21,7 +20,7 @@ const navItems = [
 ];
 
 const Sidebar = () => {
-  const [active, setActive] = useState("Dashboard");
+  const location = useLocation();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const navigate = useNavigate();
 
@@ -59,12 +58,11 @@ const cancelLogout = () => {
       {/* Navigation */}
       <nav className="flex-1 space-y-1">
         {navItems.map(({ label, path, icon: Icon }) => {
-          const isActive = active === label;
-
+         const isActive = location.pathname === path;
           return (
             <button
               key={label}
-             onClick={() => {setActive(label); navigate(path);}}
+            onClick={() => navigate(path)}
               className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm transition ${
                 isActive
                   ? "bg-purple-200 text-purple-600 font-semibold"
