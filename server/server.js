@@ -6,8 +6,12 @@ import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import passwordRoutes from "./routes/passwordRoutes.js";
+import documentRoutes from "./routes/documentRoutes.js";
 
+// Load environment variables
 dotenv.config();
+
+// Connect MongoDB
 connectDB();
 
 const app = express();
@@ -20,6 +24,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/password", passwordRoutes);
+app.use("/api/documents", documentRoutes);
 
 // Test Route
 app.get("/", (req, res) => {
