@@ -1,9 +1,5 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Sidebar from "../components/Sidebar";
-import {
-  MdOutlineCloudUpload,
-  MdDescription,
-} from "react-icons/md";
 
 const categories = [
   "Personal",
@@ -17,405 +13,390 @@ const categories = [
 ];
 
 const UploadDocument = () => {
-  const fileInputRef = useRef(null);
-
   const [selectedFile, setSelectedFile] = useState(null);
-  const [error, setError] = useState("");
-
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [showExtractedInfo, setShowExtractedInfo] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [extractedData, setExtractedData] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [showCategory, setShowCategory] = useState(false);
-
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("Personal");
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const handleFileSelect = (file) => {
-    setError("");
+  // Select file
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
 
     if (!file) return;
 
-    const allowedTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/jpg",
-      "application/pdf",
-    ];
-
-    if (!allowedTypes.includes(file.type)) {
-      setError("Only JPG, JPEG, PNG and PDF files are allowed.");
-      return;
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-      setError("File size must be less than 10 MB.");
-      return;
-    }
-
     setSelectedFile(file);
-    setShowExtractedInfo(false);
+    setExtractedData(null);
     setShowCategory(false);
-    setSelectedCategory("");
-  };
+    setShowSuccess(false);
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    handleFileSelect(file);
-  };
-
-  const handleBrowseClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleAnalyze = () => {
-    if (!selectedFile) {
-      setError("Please select a document first.");
-      return;
+    if (file.type.startsWith("image/")) {
+      setPreviewUrl(URL.createObjectURL(file));
+    } else {
+      setPreviewUrl(null);
     }
-
-    setError("");
-    setIsAnalyzing(true);
-
-    // Temporary simulation.
-    // We will replace this with OCR + Gemini later.
-    setTimeout(() => {
-      setIsAnalyzing(false);
-      setShowExtractedInfo(true);
-    }, 1500);
   };
 
+  // Upload and analyze
+  const handleAnalyze = async () => {
+    if (!selectedFile) return;
+
+    try {
+      setLoading(true);
+
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+
+      const response = await fetch(
+        "http://localhost:5000/api/gemini/analyze",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || data.message);
+      }
+
+      setExtractedData(data.extractedData);
+    } catch (error) {
+      console.error("Analysis Error:", error);
+      alert("Failed to analyze document.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Cancel
   const handleCancel = () => {
     setSelectedFile(null);
-    setShowExtractedInfo(false);
+    setPreviewUrl(null);
+    setExtractedData(null);
     setShowCategory(false);
-    setSelectedCategory("");
-    setError("");
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
   };
 
-  const handleSaveDocument = () => {
+  // Proceed to category
+  const handleProceed = () => {
     setShowCategory(true);
   };
 
- const handleFinalSave = () => {
-  if (!selectedCategory) {
-    setError("Please select a category.");
-    return;
-  }
+  // Final save
+  const handleFinalSave = () => {
+    setShowSuccess(true);
 
-  setError("");
-
-  // Temporary success popup
-  setShowSuccess(true);
-
-  setTimeout(() => {
-    setShowSuccess(false);
-  }, 3000);
-};
+    // Automatically hide success message
+    setTimeout(() => {
+      setShowSuccess(false);
+    }, 3000);
+  };
 
   return (
-    <div className="h-screen flex overflow-hidden bg-[#F3F1F9]">
+    <div className="min-h-screen flex bg-[#F3F1F9]">
 
-      {/* Success Popup */}
-        {showSuccess && (
-          <div className="fixed right-5 top-5 z-50">
-            <div className="flex items-center gap-3 rounded-xl border border-green-100 bg-white px-5 py-4 shadow-lg">
-
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-100 text-green-600">
-                ✓
-              </div>
-
-              <div>
-                <p className="text-sm font-semibold text-slate-900">
-                  Document saved successfully!
-                </p>
-
-                <p className="mt-0.5 text-xs text-slate-500">
-                  Your document has been added to MemoryVault.
-                </p>
-              </div>
-
-            </div>
-          </div>
-        )}
-
-      {/* Sidebar */}
       <Sidebar />
 
-      {/* Main Content */}
-      <main className="flex-1 h-screen overflow-hidden bg-[#F7F4FF] p-4">
+      <main className="flex-1 p-4 bg-[#F7F4FF]">
 
-        {/* ================= HEADER ================= */}
-        <div className="mb-3">
-         <h1 className="text-xl font-bold text-purple-700">
+        {/* Header */}
+        <div className="mb-4">
+          <h1 className="text-2xl font-bold text-violet-700">
             Upload Document
           </h1>
 
-          <p className="mt-1 text-xs text-violet-800">
+          <p className="mt-1 text-sm text-slate-500">
             Upload your document and let AI extract the important information.
           </p>
         </div>
 
-        {/* ================= UPLOAD STAGE ================= */}
-        {!showExtractedInfo && !showCategory && (
+        {/* ================================================= */}
+        {/* UPLOAD SCREEN */}
+        {/* ================================================= */}
+
+        {!extractedData && (
           <div className="grid grid-cols-3 gap-4">
 
-            {/* LEFT - UPLOAD */}
+            {/* Upload Card */}
             <div className="col-span-2 rounded-xl border border-[#ECE8F7] bg-white p-4 shadow-sm">
 
-              <h2 className="mb-3 text-base font-semibold text-purple-700">
+              <h2 className="mb-3 text-lg font-semibold text-slate-900">
                 Upload File
               </h2>
 
-              {/* Hidden Input */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".jpg,.jpeg,.png,.pdf"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-
-              {/* Upload Area */}
-              <div
-                onClick={!isAnalyzing ? handleBrowseClick : undefined}
-                className={`flex h-48 flex-col items-center justify-center rounded-xl border-2 border-dashed border-violet-200 bg-violet-50 transition ${
-                  !isAnalyzing
-                    ? "cursor-pointer hover:bg-violet-100"
-                    : "cursor-not-allowed opacity-70"
-                }`}
+              <label
+                htmlFor="fileInput"
+                className="flex h-48 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-violet-200 bg-violet-50 hover:bg-violet-100"
               >
 
-                <div className="mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-violet-100">
-                  <MdOutlineCloudUpload className="text-2xl text-violet-600" />
+                <div className="mb-2 text-3xl text-violet-600">
+                  ☁
                 </div>
 
-                <h3 className="text-sm font-semibold text-slate-800">
+                <h3 className="text-base font-semibold text-slate-800">
                   Drag & Drop your document
                 </h3>
 
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-sm text-slate-500">
                   or click to browse files
                 </p>
 
-                <p className="mt-2 text-[11px] text-slate-400">
+                <p className="mt-2 text-xs text-slate-400">
                   PNG • JPG • JPEG • PDF (Max 10 MB)
                 </p>
 
-              </div>
+                <input
+                  id="fileInput"
+                  type="file"
+                  accept=".png,.jpg,.jpeg,.pdf"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+
+              </label>
 
               {/* Selected File */}
               {selectedFile && (
-                <div className="mt-2 flex items-center gap-2 rounded-lg bg-violet-50 px-3 py-2">
+                <div className="mt-2 rounded-lg bg-violet-50 px-3 py-2">
 
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100">
-                    <MdDescription className="text-lg text-violet-600" />
-                  </div>
+                  <p className="text-xs font-semibold text-slate-700">
+                    Selected File
+                  </p>
 
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-medium text-slate-500">
-                      Selected File
-                    </p>
-
-                    <p className="truncate text-xs font-medium text-slate-800">
-                      {selectedFile.name}
-                    </p>
-                  </div>
+                  <p className="text-sm text-slate-500">
+                    {selectedFile.name}
+                  </p>
 
                 </div>
               )}
 
-              {/* Error */}
-              {error && (
-                <p className="mt-2 text-xs font-medium text-red-500">
-                  {error}
-                </p>
-              )}
-
-              {/* Analyze Button */}
+              {/* Analyze */}
               <div className="mt-3 flex justify-end">
 
                 <button
                   onClick={handleAnalyze}
-                  disabled={!selectedFile || isAnalyzing}
-                  className={`rounded-lg px-4 py-2 text-xs font-semibold text-white transition ${
-                    selectedFile && !isAnalyzing
-                      ? "bg-violet-600 hover:bg-violet-700"
-                      : "cursor-not-allowed bg-violet-300"
-                  }`}
+                  disabled={!selectedFile || loading}
+                  className="rounded-lg bg-violet-600 px-5 py-2 text-sm font-semibold text-white hover:bg-violet-700 disabled:bg-violet-300"
                 >
-                  {isAnalyzing
-                    ? "Analyzing..."
-                    : "Upload & Analyze"}
+                  {loading ? "Analyzing..." : "Upload & Analyze"}
                 </button>
 
               </div>
 
             </div>
 
-            {/* RIGHT - PREVIEW */}
+            {/* Preview */}
             <div className="rounded-xl border border-[#ECE8F7] bg-white p-4 shadow-sm">
 
-              <h2 className="text-base font-semibold text-slate-900">
+              <h2 className="text-lg font-semibold text-slate-900">
                 Preview
               </h2>
 
               <div className="mt-3 flex h-48 items-center justify-center overflow-hidden rounded-xl bg-[#FBFAFF]">
 
-                {!selectedFile && (
-                  <div className="text-center">
-                    <MdDescription className="mx-auto text-4xl text-violet-200" />
+                {previewUrl ? (
+                  <img
+                    src={previewUrl}
+                    alt="Document Preview"
+                    className="h-full w-full object-contain"
+                  />
+                ) : (
+                  <p className="text-sm text-slate-400">
+                    No document selected
+                  </p>
+                )}
 
-                    <p className="mt-2 text-xs text-slate-400">
-                      No document selected
-                    </p>
+              </div>
+
+            </div>
+
+          </div>
+        )}
+
+        {/* ================================================= */}
+        {/* AI EXTRACTION SCREEN */}
+        {/* ================================================= */}
+
+        {extractedData && !showCategory && (
+          <div className="rounded-xl border border-[#ECE8F7] bg-white p-4 shadow-sm">
+
+            <h2 className="text-xl font-semibold text-slate-900">
+              AI Extracted Information
+            </h2>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Review the information extracted from your document.
+            </p>
+
+            {/* Compact Information Box */}
+            <div className="mt-3 rounded-lg bg-violet-50 p-4">
+
+              <div className="grid grid-cols-2 gap-x-8 gap-y-3">
+
+                <Info
+                  label="Document Type"
+                  value={extractedData.documentType}
+                />
+
+                <Info
+                  label="Name"
+                  value={extractedData.name}
+                />
+
+                <Info
+                  label="Document Number"
+                  value={extractedData.documentNumber}
+                />
+
+                <Info
+                  label="Issue Date"
+                  value={extractedData.issueDate}
+                />
+
+                <Info
+                  label="Expiry Date"
+                  value={extractedData.expiryDate}
+                />
+
+                <Info
+                  label="Description"
+                  value={extractedData.description}
+                />
+
+              </div>
+
+              {/* Additional Information */}
+              {extractedData.additionalInformation &&
+                Object.keys(extractedData.additionalInformation).length > 0 && (
+
+                  <div className="mt-3 border-t border-violet-100 pt-3">
+
+                    <h3 className="mb-2 text-sm font-semibold text-slate-800">
+                      Additional Information
+                    </h3>
+
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-2">
+
+                      {Object.entries(
+                        extractedData.additionalInformation
+                      ).map(([key, value]) => (
+                        <Info
+                          key={key}
+                          label={key}
+                          value={value}
+                        />
+                      ))}
+
+                    </div>
+
                   </div>
                 )}
 
-                {selectedFile &&
-                  selectedFile.type.startsWith("image/") && (
-                    <img
-                      src={URL.createObjectURL(selectedFile)}
-                      alt="Document preview"
-                      className="h-full w-full object-contain"
-                    />
-                  )}
-
-                {selectedFile &&
-                  selectedFile.type === "application/pdf" && (
-                    <div className="text-center px-3">
-                      <MdDescription className="mx-auto text-4xl text-violet-400" />
-
-                      <p className="mt-2 truncate text-xs text-slate-500">
-                        {selectedFile.name}
-                      </p>
-                    </div>
-                  )}
-
-              </div>
-
             </div>
 
-          </div>
-        )}
+            {/* Buttons */}
+            <div className="mt-3 flex justify-end gap-2">
 
-        {/* ================= EXTRACTED INFORMATION ================= */}
-        {showExtractedInfo && !showCategory && (
-          <div className="max-w-2xl">
-
-            <div className="rounded-xl border border-[#ECE8F7] bg-white p-5 shadow-sm">
-
-              <h2 className="text-base font-semibold text-slate-900">
-                AI Extracted Information
-              </h2>
-
-              <p className="mt-1 text-xs text-slate-500">
-                Review the information extracted from your document.
-              </p>
-
-              <div className="mt-4 rounded-lg bg-violet-50 p-4">
-                <p className="text-xs text-slate-500">
-                  AI extraction results will appear here.
-                </p>
-
-                <p className="mt-1 text-[11px] text-slate-400">
-                  OCR and Gemini AI will be connected next.
-                </p>
-              </div>
-
-              <div className="mt-4 flex justify-end gap-2">
-
-                <button
-                  onClick={handleCancel}
-                  className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  onClick={handleSaveDocument}
-                  className="rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-700"
-                >
-                  Save Document
-                </button>
-
-              </div>
-
-            </div>
-
-          </div>
-        )}
-
-        {/* ================= CATEGORY ================= */}
-        {showCategory && (
-          <div className="max-w-md">
-
-            <div className="rounded-xl border border-[#ECE8F7] bg-white p-5 shadow-sm">
-
-              <h2 className="text-base font-semibold text-slate-900">
-                Select Category
-              </h2>
-
-              <p className="mt-1 text-xs text-slate-500">
-                Choose where you want to store this document.
-              </p>
-
-              <select
-                value={selectedCategory}
-                onChange={(e) => {
-                  setSelectedCategory(e.target.value);
-                  setError("");
-                }}
-                className="mt-4 w-full rounded-lg border border-[#ECE8F7] bg-[#FBFAFF] px-3 py-2.5 text-xs text-slate-700 outline-none focus:ring-2 focus:ring-violet-500"
+              <button
+                onClick={handleCancel}
+                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
               >
-                <option value="">
-                  Select a category
-                </option>
+                Cancel
+              </button>
 
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-
-              {error && (
-                <p className="mt-2 text-xs font-medium text-red-500">
-                  {error}
-                </p>
-              )}
-
-              <div className="mt-4 flex justify-end gap-2">
-
-                <button
-                  onClick={handleCancel}
-                  className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  onClick={handleFinalSave}
-                  disabled={!selectedCategory}
-                  className={`rounded-lg px-4 py-2 text-xs font-semibold text-white ${
-                    selectedCategory
-                      ? "bg-violet-600 hover:bg-violet-700"
-                      : "cursor-not-allowed bg-violet-300"
-                  }`}
-                >
-                  Save Document
-                </button>
-
-              </div>
+              <button
+                onClick={handleProceed}
+                className="rounded-lg bg-violet-600 px-5 py-2 text-sm font-semibold text-white hover:bg-violet-700"
+              >
+                Proceed
+              </button>
 
             </div>
 
+          </div>
+        )}
+
+        {/* ================================================= */}
+        {/* CATEGORY SCREEN */}
+        {/* ================================================= */}
+
+        {extractedData && showCategory && (
+          <div className="max-w-xl rounded-xl border border-[#ECE8F7] bg-white p-5 shadow-sm">
+
+            <h2 className="text-xl font-semibold text-slate-900">
+              Select Category
+            </h2>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Choose where you want to store this document.
+            </p>
+
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="mt-4 w-full rounded-lg border border-violet-100 bg-[#FBFAFF] px-4 py-2.5 text-sm text-slate-700 outline-none focus:border-violet-400"
+            >
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+
+            <div className="mt-4 flex justify-end gap-2">
+
+              <button
+                onClick={() => setShowCategory(false)}
+                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Back
+              </button>
+
+              <button
+                onClick={handleFinalSave}
+                className="rounded-lg bg-violet-600 px-5 py-2 text-sm font-semibold text-white hover:bg-violet-700"
+              >
+                Save Document
+              </button>
+
+            </div>
+
+          </div>
+        )}
+
+        {/* ================================================= */}
+        {/* SUCCESS POPUP */}
+        {/* ================================================= */}
+
+        {showSuccess && (
+          <div className="fixed right-6 top-6 z-50 rounded-lg bg-green-500 px-5 py-3 text-sm font-semibold text-white shadow-lg">
+            ✓ Document saved successfully
           </div>
         )}
 
       </main>
+    </div>
+  );
+};
+
+
+/* ================================================= */
+/* INFORMATION COMPONENT */
+/* ================================================= */
+
+const Info = ({ label, value }) => {
+  return (
+    <div>
+      <p className="text-xs text-slate-400">
+        {label}
+      </p>
+
+      <p className="mt-0.5 text-sm font-semibold text-slate-800">
+        {value || "Not available"}
+      </p>
     </div>
   );
 };

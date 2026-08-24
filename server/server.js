@@ -7,6 +7,7 @@ import authRoutes from "./routes/authRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import passwordRoutes from "./routes/passwordRoutes.js";
 import documentRoutes from "./routes/documentRoutes.js";
+import geminiRoutes from "./routes/geminiRoutes.js";
 
 // Load environment variables
 dotenv.config();
@@ -25,6 +26,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/password", passwordRoutes);
 app.use("/api/documents", documentRoutes);
+app.use("/api/gemini", geminiRoutes);
 
 // Test Route
 app.get("/", (req, res) => {
