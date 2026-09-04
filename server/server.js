@@ -9,8 +9,11 @@ import passwordRoutes from "./routes/passwordRoutes.js";
 import documentRoutes from "./routes/documentRoutes.js";
 import geminiRoutes from "./routes/geminiRoutes.js";
 
+
 // Load environment variables
 dotenv.config();
+
+console.log("JWT_SECRET loaded:", !!process.env.JWT_SECRET);
 
 // Connect MongoDB
 connectDB();

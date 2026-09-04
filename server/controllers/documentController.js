@@ -78,3 +78,26 @@ export const createDocument = async (req, res) => {
     });
   }
 };
+
+// Get all documents of logged-in user
+export const getDocuments = async (req, res) => {
+  try {
+    const userId = req.user.id || req.user;
+
+    const documents = await Document.find({
+      user: userId,
+    }).sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      documents,
+    });
+  } catch (error) {
+    console.error("Get Documents Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch documents.",
+    });
+  }
+};

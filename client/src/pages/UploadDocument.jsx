@@ -85,15 +85,89 @@ const UploadDocument = () => {
     setShowCategory(true);
   };
 
-  // Final save
-  const handleFinalSave = () => {
+  const handleFinalSave = async () => {
+  try {
+    setLoading(true);
+
+    const formData = new FormData();
+
+    // Original uploaded file
+    formData.append("file", selectedFile);
+
+    // AI extracted information
+    formData.append(
+      "documentName",
+      extractedData.documentType || "Document"
+    );
+
+    formData.append(
+      "documentNumber",
+      extractedData.documentNumber || ""
+    );
+
+    formData.append(
+      "issueDate",
+      extractedData.issueDate || ""
+    );
+
+    formData.append(
+      "expiryDate",
+      extractedData.expiryDate || ""
+    );
+
+    formData.append(
+      "description",
+      extractedData.description || ""
+    );
+
+    // User-selected category
+    formData.append("category", selectedCategory);
+
+    // JWT token
+    const token = localStorage.getItem("token");
+
+    const response = await fetch(
+      "http://localhost:5000/api/documents",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to save document.");
+    }
+
+    console.log("Document saved:", data);
+
+    // Show success popup ONLY after backend succeeds
     setShowSuccess(true);
 
-    // Automatically hide success message
+    // Reset after 3 seconds
     setTimeout(() => {
       setShowSuccess(false);
+
+      setSelectedFile(null);
+      setPreviewUrl(null);
+      setExtractedData(null);
+      setShowCategory(false);
+      setSelectedCategory("Personal");
     }, 3000);
-  };
+
+  } catch (error) {
+    console.error("Save Document Error:", error);
+
+    alert(error.message || "Failed to save document.");
+
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen flex bg-[#F3F1F9]">
