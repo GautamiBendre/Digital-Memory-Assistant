@@ -8,6 +8,8 @@ import profileRoutes from "./routes/profileRoutes.js";
 import passwordRoutes from "./routes/passwordRoutes.js";
 import documentRoutes from "./routes/documentRoutes.js";
 import geminiRoutes from "./routes/geminiRoutes.js";
+import reminderRoutes from "./routes/reminderRoutes.js";
+import { startReminderCron } from "./services/reminderCron.js";
 
 
 // Load environment variables
@@ -17,6 +19,8 @@ console.log("JWT_SECRET loaded:", !!process.env.JWT_SECRET);
 
 // Connect MongoDB
 connectDB();
+
+startReminderCron();
 
 const app = express();
 
@@ -30,6 +34,7 @@ app.use("/api/profile", profileRoutes);
 app.use("/api/password", passwordRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/gemini", geminiRoutes);
+app.use("/api/reminders", reminderRoutes);
 
 // Test Route
 app.get("/", (req, res) => {

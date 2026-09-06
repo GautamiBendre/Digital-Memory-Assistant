@@ -1,8 +1,10 @@
 import express from "express";
 import protect from "../middleware/authMiddleware.js";
 import upload from "../middleware/uploadMiddleware.js";
-import { createDocument,
+import {
+  createDocument,
   getDocuments,
+  renewDocument,
 } from "../controllers/documentController.js";
 
 const router = express.Router();
@@ -19,6 +21,13 @@ router.get(
   "/",
   protect,
   getDocuments
+);
+
+router.post(
+  "/renew",
+  protect,
+  upload.single("file"),
+  renewDocument
 );
 
 export default router;

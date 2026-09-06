@@ -63,14 +63,32 @@ const documentSchema = new mongoose.Schema(
     fileType: {
       type: String,
     },
+
+    // Document versioning / renewal
+    status: {
+      type: String,
+      enum: ["active", "archived"],
+      default: "active",
+    },
+
+    isCurrent: {
+      type: Boolean,
+      default: true,
+    },
+
+    previousDocument: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Document",
+      default: null,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-const Document = mongoose.model("Document", documentSchema);
+const Document =
+  mongoose.models.Document ||
+  mongoose.model("Document", documentSchema);
 
 export default Document;
-
-
