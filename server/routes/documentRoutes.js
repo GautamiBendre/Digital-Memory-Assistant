@@ -5,6 +5,8 @@ import {
   createDocument,
   getDocuments,
   renewDocument,
+  deleteDocument,
+  getDocumentHistory,
 } from "../controllers/documentController.js";
 
 const router = express.Router();
@@ -28,6 +30,18 @@ router.post(
   protect,
   upload.single("file"),
   renewDocument
+);
+
+router.delete(
+  "/:id",
+  protect,
+  deleteDocument
+);
+
+router.get(
+  "/:id/history",
+  protect,
+  getDocumentHistory
 );
 
 export default router;

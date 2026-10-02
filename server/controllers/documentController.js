@@ -242,3 +242,106 @@ export const renewDocument = async (req, res) => {
     });
   }
 };
+
+// Delete Document
+export const deleteDocument = async (req, res) => {
+  try {
+    const userId = req.user.id || req.user;
+    const { id } = req.params;
+
+    // Find document
+    const document = await Document.findById(id);
+
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        message: "Document not found.",
+      });
+    }
+
+    // Make sure document belongs to logged-in user
+    if (document.user.toString() !== userId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to delete this document.",
+      });
+    }
+
+    // Delete file from Cloudinary
+    if (document.filePublicId) {
+      await cloudinary.uploader.destroy(document.filePublicId, {
+        resource_type: document.fileType?.includes("pdf")
+          ? "raw"
+          : "image",
+      });
+    }
+
+    // Delete document from MongoDB
+    await Document.findByIdAndDelete(id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Document deleted successfully.",
+    });
+  } catch (error) {
+    console.error("Delete Document Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete document.",
+    });
+  }
+};
+
+// Get Document Version History
+export const getDocumentHistory = async (req, res) => {
+  try {
+    const userId = req.user.id || req.user;
+    const { id } = req.params;
+
+    // Find the requested document
+    let currentDocument = await Document.findById(id);
+
+    if (!currentDocument) {
+      return res.status(404).json({
+        success: false,
+        message: "Document not found.",
+      });
+    }
+
+    // Make sure the document belongs to the logged-in user
+    if (currentDocument.user.toString() !== userId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to view this document history.",
+      });
+    }
+
+    const history = [];
+
+    // Start with current/requested document
+    let document = currentDocument;
+
+    while (document) {
+      history.push(document);
+
+      if (!document.previousDocument) {
+        break;
+      }
+
+      document = await Document.findById(document.previousDocument);
+    }
+
+    return res.status(200).json({
+      success: true,
+      history,
+    });
+  } catch (error) {
+    console.error("Get Document History Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch document history.",
+    });
+  }
+};

@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 
 import {
   MdOutlineNotifications,
-  MdOutlineSearch,
-  MdOutlineKeyboardArrowDown,
   MdOutlineDescription,
   MdOutlineAccessTime,
   MdOutlineCheckCircle,
@@ -28,12 +26,13 @@ function WalletIllustration() {
       <circle cx="20" cy="150" r="6" fill="#FBCFE8" opacity="0.6" />
       <ellipse cx="45" cy="90" rx="16" ry="12" fill="#E9D5FF" opacity="0.7" />
 
-      {/* shield */}
+      {/* Shield */}
       <g transform="translate(120 55) rotate(-8)">
         <path
           d="M0 0 L26 8 V30 Q26 46 0 54 Q-26 46 -26 30 V8 Z"
           fill="#F472B6"
         />
+
         <path
           d="M-9 26 L-2 33 L11 15"
           stroke="#FFFFFF"
@@ -44,7 +43,7 @@ function WalletIllustration() {
         />
       </g>
 
-      {/* aadhaar card */}
+      {/* Aadhaar card */}
       <g transform="translate(150 60) rotate(-6)">
         <rect
           x="-24"
@@ -54,7 +53,15 @@ function WalletIllustration() {
           rx="6"
           fill="#FBCFE8"
         />
-        <circle cx="-8" cy="-10" r="7" fill="#F472B6" opacity="0.8" />
+
+        <circle
+          cx="-8"
+          cy="-10"
+          r="7"
+          fill="#F472B6"
+          opacity="0.8"
+        />
+
         <rect
           x="-14"
           y="4"
@@ -64,6 +71,7 @@ function WalletIllustration() {
           fill="#F472B6"
           opacity="0.6"
         />
+
         <rect
           x="-14"
           y="12"
@@ -75,7 +83,7 @@ function WalletIllustration() {
         />
       </g>
 
-      {/* passport */}
+      {/* Passport */}
       <g transform="translate(210 45) rotate(6)">
         <rect
           x="-26"
@@ -85,6 +93,7 @@ function WalletIllustration() {
           rx="6"
           fill="#7C3AED"
         />
+
         <circle
           cx="6"
           cy="-6"
@@ -93,6 +102,7 @@ function WalletIllustration() {
           stroke="#FDE68A"
           strokeWidth="2.5"
         />
+
         <line
           x1="-8"
           y1="-6"
@@ -101,6 +111,7 @@ function WalletIllustration() {
           stroke="#FDE68A"
           strokeWidth="2"
         />
+
         <rect
           x="-10"
           y="20"
@@ -122,6 +133,7 @@ function WalletIllustration() {
           rx="6"
           fill="#60A5FA"
         />
+
         <circle
           cx="-10"
           cy="0"
@@ -129,6 +141,7 @@ function WalletIllustration() {
           fill="#EFF6FF"
           opacity="0.9"
         />
+
         <rect
           x="0"
           y="-4"
@@ -138,6 +151,7 @@ function WalletIllustration() {
           fill="#EFF6FF"
           opacity="0.7"
         />
+
         <rect
           x="0"
           y="3"
@@ -149,7 +163,7 @@ function WalletIllustration() {
         />
       </g>
 
-      {/* driving license */}
+      {/* Driving license */}
       <g transform="translate(178 108) rotate(4)">
         <rect
           x="-28"
@@ -159,6 +173,7 @@ function WalletIllustration() {
           rx="6"
           fill="#FDE68A"
         />
+
         <circle
           cx="18"
           cy="-2"
@@ -166,6 +181,7 @@ function WalletIllustration() {
           fill="#F59E0B"
           opacity="0.8"
         />
+
         <rect
           x="-16"
           y="-2"
@@ -175,6 +191,7 @@ function WalletIllustration() {
           fill="#B45309"
           opacity="0.6"
         />
+
         <rect
           x="-16"
           y="5"
@@ -186,7 +203,7 @@ function WalletIllustration() {
         />
       </g>
 
-      {/* insurance */}
+      {/* Insurance */}
       <g transform="translate(228 100) rotate(2)">
         <rect
           x="-22"
@@ -196,6 +213,7 @@ function WalletIllustration() {
           rx="6"
           fill="#C4B5FD"
         />
+
         <path
           d="M0 -6 L10 -1 V8 Q10 15 0 19 Q-10 15 -10 8 V-1 Z"
           fill="#FFFFFF"
@@ -203,7 +221,7 @@ function WalletIllustration() {
         />
       </g>
 
-      {/* wallet pouch */}
+      {/* Wallet pouch */}
       <path
         d="M40 140
            Q40 128 52 128
@@ -227,6 +245,7 @@ function WalletIllustration() {
       />
 
       <circle cx="156" cy="170" r="12" fill="#FDE68A" />
+
       <circle
         cx="156"
         cy="170"
@@ -238,6 +257,7 @@ function WalletIllustration() {
 
       <g transform="translate(20 175)">
         <circle cx="0" cy="0" r="16" fill="#FCD34D" />
+
         <text
           x="0"
           y="5"
@@ -262,10 +282,9 @@ export default function DashboardHome() {
   const user = JSON.parse(localStorage.getItem("user")) || {};
 
   const [documents, setDocuments] = useState([]);
-  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Fetch logged-in user's documents
+  // Fetch logged-in user's current documents
   useEffect(() => {
     const fetchDocuments = async () => {
       try {
@@ -289,7 +308,14 @@ export default function DashboardHome() {
           );
         }
 
-        setDocuments(data.documents || []);
+        // Only use active/current documents
+        const currentDocuments = (data.documents || []).filter(
+          (document) =>
+            document.status === "active" &&
+            document.isCurrent === true
+        );
+
+        setDocuments(currentDocuments);
       } catch (error) {
         console.error("Dashboard Documents Error:", error);
       } finally {
@@ -361,25 +387,14 @@ export default function DashboardHome() {
     )
     .slice(0, 4);
 
-  // Search
-  const filteredDocuments = documents.filter((document) => {
-    const searchText = search.toLowerCase();
-
-    return (
-      document.documentName
-        ?.toLowerCase()
-        .includes(searchText) ||
-      document.category
-        ?.toLowerCase()
-        .includes(searchText) ||
-      document.documentNumber
-        ?.toLowerCase()
-        .includes(searchText)
-    );
-  });
-
   // Recent documents
-  const recentDocuments = filteredDocuments.slice(0, 4);
+  const recentDocuments = [...documents]
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt) -
+        new Date(a.createdAt)
+    )
+    .slice(0, 4);
 
   return (
     <div className="min-h-screen w-full flex bg-[#F3F1F9]">
@@ -728,6 +743,7 @@ export default function DashboardHome() {
         </div>
 
       </main>
+
     </div>
   );
 }

@@ -21,7 +21,10 @@ const UploadDocument = () => {
   const [selectedCategory, setSelectedCategory] = useState("Personal");
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Select file
+  // =========================================================
+  // SELECT FILE
+  // =========================================================
+
   const handleFileChange = (event) => {
     const file = event.target.files[0];
 
@@ -39,7 +42,10 @@ const UploadDocument = () => {
     }
   };
 
-  // Upload and analyze
+  // =========================================================
+  // UPLOAD & ANALYZE
+  // =========================================================
+
   const handleAnalyze = async () => {
     if (!selectedFile) return;
 
@@ -63,6 +69,8 @@ const UploadDocument = () => {
         throw new Error(data.error || data.message);
       }
 
+      console.log("Gemini extracted data:", data.extractedData);
+
       setExtractedData(data.extractedData);
     } catch (error) {
       console.error("Analysis Error:", error);
@@ -72,7 +80,10 @@ const UploadDocument = () => {
     }
   };
 
-  // Cancel
+  // =========================================================
+  // CANCEL
+  // =========================================================
+
   const handleCancel = () => {
     setSelectedFile(null);
     setPreviewUrl(null);
@@ -80,110 +91,126 @@ const UploadDocument = () => {
     setShowCategory(false);
   };
 
-  // Proceed to category
+  // =========================================================
+  // PROCEED TO CATEGORY
+  // =========================================================
+
   const handleProceed = () => {
     setShowCategory(true);
   };
 
+  // =========================================================
+  // SAVE DOCUMENT
+  // =========================================================
+
   const handleFinalSave = async () => {
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const formData = new FormData();
+      const formData = new FormData();
 
-    // Original uploaded file
-    formData.append("file", selectedFile);
+      // Original uploaded file
+      formData.append("file", selectedFile);
 
-    // AI extracted information
-    formData.append(
-      "documentName",
-      extractedData.documentType || "Document"
-    );
+      // AI extracted information
+      formData.append(
+        "documentName",
+        extractedData.documentType || "Document"
+      );
 
-    formData.append(
-      "documentNumber",
-      extractedData.documentNumber || ""
-    );
+      formData.append(
+        "documentNumber",
+        extractedData.documentNumber || ""
+      );
 
-    formData.append(
-      "issueDate",
-      extractedData.issueDate || ""
-    );
+      formData.append(
+        "issueDate",
+        extractedData.issueDate || ""
+      );
 
-    formData.append(
-      "expiryDate",
-      extractedData.expiryDate || ""
-    );
+      formData.append(
+        "expiryDate",
+        extractedData.expiryDate || ""
+      );
 
-    formData.append(
-      "description",
-      extractedData.description || ""
-    );
+      formData.append(
+        "description",
+        extractedData.description || ""
+      );
 
-    // User-selected category
-    formData.append("category", selectedCategory);
+      // User-selected category
+      formData.append("category", selectedCategory);
 
-    // JWT token
-    const token = localStorage.getItem("token");
+      // JWT token
+      const token = localStorage.getItem("token");
 
-    const response = await fetch(
-      "http://localhost:5000/api/documents",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
+      const response = await fetch(
+        "http://localhost:5000/api/documents",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to save document."
+        );
       }
-    );
 
-    const data = await response.json();
+      console.log("Document saved:", data);
 
-    if (!response.ok) {
-      throw new Error(data.message || "Failed to save document.");
+      // Show success popup
+      setShowSuccess(true);
+
+      // Reset after 3 seconds
+      setTimeout(() => {
+        setShowSuccess(false);
+
+        setSelectedFile(null);
+        setPreviewUrl(null);
+        setExtractedData(null);
+        setShowCategory(false);
+        setSelectedCategory("Personal");
+      }, 3000);
+    } catch (error) {
+      console.error("Save Document Error:", error);
+
+      alert(
+        error.message || "Failed to save document."
+      );
+    } finally {
+      setLoading(false);
     }
+  };
 
-    console.log("Document saved:", data);
-
-    // Show success popup ONLY after backend succeeds
-    setShowSuccess(true);
-
-    // Reset after 3 seconds
-    setTimeout(() => {
-      setShowSuccess(false);
-
-      setSelectedFile(null);
-      setPreviewUrl(null);
-      setExtractedData(null);
-      setShowCategory(false);
-      setSelectedCategory("Personal");
-    }, 3000);
-
-  } catch (error) {
-    console.error("Save Document Error:", error);
-
-    alert(error.message || "Failed to save document.");
-
-  } finally {
-    setLoading(false);
-  }
-};
+  // =========================================================
+  // UI
+  // =========================================================
 
   return (
     <div className="min-h-screen flex bg-[#F3F1F9]">
-
       <Sidebar />
 
       <main className="flex-1 p-4 bg-[#F7F4FF]">
 
-        {/* Header */}
+        {/* ================================================= */}
+        {/* HEADER */}
+        {/* ================================================= */}
+
         <div className="mb-4">
           <h1 className="text-2xl font-bold text-violet-700">
             Upload Document
           </h1>
 
           <p className="mt-1 text-sm text-slate-500">
-            Upload your document and let AI extract the important information.
+            Upload your document and let AI extract the important
+            information.
           </p>
         </div>
 
@@ -195,6 +222,7 @@ const UploadDocument = () => {
           <div className="grid grid-cols-3 gap-4">
 
             {/* Upload Card */}
+
             <div className="col-span-2 rounded-xl border border-[#ECE8F7] bg-white p-4 shadow-sm">
 
               <h2 className="mb-3 text-lg font-semibold text-slate-900">
@@ -205,7 +233,6 @@ const UploadDocument = () => {
                 htmlFor="fileInput"
                 className="flex h-48 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-violet-200 bg-violet-50 hover:bg-violet-100"
               >
-
                 <div className="mb-2 text-3xl text-violet-600">
                   ☁
                 </div>
@@ -229,13 +256,12 @@ const UploadDocument = () => {
                   className="hidden"
                   onChange={handleFileChange}
                 />
-
               </label>
 
               {/* Selected File */}
+
               {selectedFile && (
                 <div className="mt-2 rounded-lg bg-violet-50 px-3 py-2">
-
                   <p className="text-xs font-semibold text-slate-700">
                     Selected File
                   </p>
@@ -243,26 +269,26 @@ const UploadDocument = () => {
                   <p className="text-sm text-slate-500">
                     {selectedFile.name}
                   </p>
-
                 </div>
               )}
 
               {/* Analyze */}
-              <div className="mt-3 flex justify-end">
 
+              <div className="mt-3 flex justify-end">
                 <button
                   onClick={handleAnalyze}
                   disabled={!selectedFile || loading}
                   className="rounded-lg bg-violet-600 px-5 py-2 text-sm font-semibold text-white hover:bg-violet-700 disabled:bg-violet-300"
                 >
-                  {loading ? "Analyzing..." : "Upload & Analyze"}
+                  {loading
+                    ? "Analyzing..."
+                    : "Upload & Analyze"}
                 </button>
-
               </div>
-
             </div>
 
             {/* Preview */}
+
             <div className="rounded-xl border border-[#ECE8F7] bg-white p-4 shadow-sm">
 
               <h2 className="text-lg font-semibold text-slate-900">
@@ -284,9 +310,7 @@ const UploadDocument = () => {
                 )}
 
               </div>
-
             </div>
-
           </div>
         )}
 
@@ -295,20 +319,23 @@ const UploadDocument = () => {
         {/* ================================================= */}
 
         {extractedData && !showCategory && (
-          <div className="rounded-xl border border-[#ECE8F7] bg-white p-4 shadow-sm">
+          <div className="rounded-xl border border-[#ECE8F7] bg-white p-3 shadow-sm">
 
-            <h2 className="text-xl font-semibold text-slate-900">
+            <h2 className="text-lg font-semibold text-slate-900">
               AI Extracted Information
             </h2>
 
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-0.5 text-xs text-slate-500">
               Review the information extracted from your document.
             </p>
 
             {/* Compact Information Box */}
-            <div className="mt-3 rounded-lg bg-violet-50 p-4">
 
-              <div className="grid grid-cols-2 gap-x-8 gap-y-3">
+            <div className="mt-2 rounded-lg bg-violet-50 p-3">
+
+              {/* Main Information */}
+
+              <div className="grid grid-cols-3 gap-x-6 gap-y-2">
 
                 <Info
                   label="Document Type"
@@ -343,16 +370,18 @@ const UploadDocument = () => {
               </div>
 
               {/* Additional Information */}
+
               {extractedData.additionalInformation &&
-                Object.keys(extractedData.additionalInformation).length > 0 && (
+                Object.keys(extractedData.additionalInformation).length >
+                  0 && (
 
-                  <div className="mt-3 border-t border-violet-100 pt-3">
+                  <div className="mt-2 border-t border-violet-100 pt-2">
 
-                    <h3 className="mb-2 text-sm font-semibold text-slate-800">
+                    <h3 className="mb-1.5 text-xs font-semibold text-slate-800">
                       Additional Information
                     </h3>
 
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-2">
+                    <div className="grid grid-cols-4 gap-x-5 gap-y-1.5">
 
                       {Object.entries(
                         extractedData.additionalInformation
@@ -365,31 +394,29 @@ const UploadDocument = () => {
                       ))}
 
                     </div>
-
                   </div>
                 )}
-
             </div>
 
             {/* Buttons */}
-            <div className="mt-3 flex justify-end gap-2">
+
+            <div className="mt-2 flex justify-end gap-2">
 
               <button
                 onClick={handleCancel}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                className="rounded-lg border border-slate-200 px-4 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
               >
                 Cancel
               </button>
 
               <button
                 onClick={handleProceed}
-                className="rounded-lg bg-violet-600 px-5 py-2 text-sm font-semibold text-white hover:bg-violet-700"
+                className="rounded-lg bg-violet-600 px-5 py-1.5 text-xs font-semibold text-white hover:bg-violet-700"
               >
                 Proceed
               </button>
 
             </div>
-
           </div>
         )}
 
@@ -410,11 +437,16 @@ const UploadDocument = () => {
 
             <select
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              onChange={(e) =>
+                setSelectedCategory(e.target.value)
+              }
               className="mt-4 w-full rounded-lg border border-violet-100 bg-[#FBFAFF] px-4 py-2.5 text-sm text-slate-700 outline-none focus:border-violet-400"
             >
               {categories.map((category) => (
-                <option key={category} value={category}>
+                <option
+                  key={category}
+                  value={category}
+                >
                   {category}
                 </option>
               ))}
@@ -431,13 +463,15 @@ const UploadDocument = () => {
 
               <button
                 onClick={handleFinalSave}
-                className="rounded-lg bg-violet-600 px-5 py-2 text-sm font-semibold text-white hover:bg-violet-700"
+                disabled={loading}
+                className="rounded-lg bg-violet-600 px-5 py-2 text-sm font-semibold text-white hover:bg-violet-700 disabled:cursor-not-allowed disabled:bg-violet-300"
               >
-                Save Document
+                {loading
+                  ? "Saving..."
+                  : "Save Document"}
               </button>
 
             </div>
-
           </div>
         )}
 
@@ -456,20 +490,62 @@ const UploadDocument = () => {
   );
 };
 
-
 /* ================================================= */
 /* INFORMATION COMPONENT */
 /* ================================================= */
 
 const Info = ({ label, value }) => {
+  let displayValue;
+
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    displayValue = "Not available";
+  } else if (typeof value === "object") {
+    /*
+      FIX:
+      Gemini can return an object instead of a string.
+
+      Example:
+      {
+        subjectCode: "CS101",
+        subjectName: "Computer Science",
+        marksInFigures: "85",
+        marksInWords: "Eighty Five"
+      }
+
+      React cannot directly render this object.
+    */
+
+    displayValue = Object.entries(value)
+      .map(([key, val]) => {
+        if (
+          val !== null &&
+          typeof val === "object"
+        ) {
+          return `${key}: ${JSON.stringify(val)}`;
+        }
+
+        return `${key}: ${val}`;
+      })
+      .join(" • ");
+  } else {
+    displayValue = String(value);
+  }
+
   return (
-    <div>
-      <p className="text-xs text-slate-400">
+    <div className="min-w-0">
+      <p className="text-[10px] leading-4 text-slate-400">
         {label}
       </p>
 
-      <p className="mt-0.5 text-sm font-semibold text-slate-800">
-        {value || "Not available"}
+      <p
+        className="mt-0.5 break-words text-xs font-semibold text-slate-800"
+        title={displayValue}
+      >
+        {displayValue}
       </p>
     </div>
   );
