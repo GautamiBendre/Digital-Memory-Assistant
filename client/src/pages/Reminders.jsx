@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import Sidebar from "../components/Sidebar";
 
 const Reminders = () => {
+  const navigate = useNavigate();
+
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
@@ -32,7 +36,6 @@ const Reminders = () => {
           );
         }
 
-        // Only current active documents should appear
         const currentDocuments = (data.documents || []).filter(
           (document) =>
             document.status === "active" &&
@@ -54,7 +57,7 @@ const Reminders = () => {
   }, []);
 
   // =========================================================
-  // CALCULATE DAYS REMAINING
+  // CALCULATE DAYS LEFT
   // =========================================================
 
   const getDaysLeft = (expiryDate) => {
@@ -78,28 +81,19 @@ const Reminders = () => {
   // =========================================================
 
   const getStatus = (daysLeft, hasExpiry) => {
-    // No expiry date = All Good
-    if (!hasExpiry) {
-      return "All Good";
-    }
+    if (!hasExpiry) return "All Good";
 
-    if (daysLeft < 0) {
-      return "Expired";
-    }
+    if (daysLeft < 0) return "Expired";
 
-    if (daysLeft <= 30) {
-      return "Expiring Soon";
-    }
+    if (daysLeft <= 30) return "Expiring Soon";
 
-    if (daysLeft <= 90) {
-      return "Upcoming";
-    }
+    if (daysLeft <= 90) return "Upcoming";
 
     return "All Good";
   };
 
   // =========================================================
-  // DOCUMENTS WITH STATUS
+  // DOCUMENT DATA
   // =========================================================
 
   const allDocumentsWithStatus = documents.map((document) => {
@@ -117,29 +111,14 @@ const Reminders = () => {
     };
   });
 
-  // =========================================================
-  // REMINDER DOCUMENTS
-  //
-  // Only documents WITH expiry dates belong here.
-  // No-expiry documents are not reminders.
-  // =========================================================
-
-  const reminderDocuments = allDocumentsWithStatus.filter(
-    (document) => document.hasExpiry
-  );
-
-  // =========================================================
-  // EXPIRED
-  // =========================================================
+  const reminderDocuments =
+    allDocumentsWithStatus.filter(
+      (document) => document.hasExpiry
+    );
 
   const expired = reminderDocuments.filter(
     (document) => document.daysLeft < 0
   );
-
-  // =========================================================
-  // EXPIRING SOON
-  // 0 - 30 DAYS
-  // =========================================================
 
   const expiringSoon = reminderDocuments.filter(
     (document) =>
@@ -147,24 +126,11 @@ const Reminders = () => {
       document.daysLeft <= 30
   );
 
-  // =========================================================
-  // UPCOMING
-  // 31 - 90 DAYS
-  // =========================================================
-
   const upcoming = reminderDocuments.filter(
     (document) =>
       document.daysLeft > 30 &&
       document.daysLeft <= 90
   );
-
-  // =========================================================
-  // ALL GOOD
-  //
-  // Includes:
-  // 1. Documents with NO expiry date
-  // 2. Documents whose expiry is more than 90 days away
-  // =========================================================
 
   const allGood = allDocumentsWithStatus.filter(
     (document) =>
@@ -173,7 +139,7 @@ const Reminders = () => {
   );
 
   // =========================================================
-  // FILTER TABS
+  // ACTIVE TAB
   // =========================================================
 
   const filteredDocuments =
@@ -186,15 +152,179 @@ const Reminders = () => {
       : upcoming;
 
   // =========================================================
+  // STATUS STYLES
+  // =========================================================
+
+  const getStatusStyle = (status) => {
+    if (status === "Expired") {
+      return "bg-red-50 text-red-600";
+    }
+
+    if (status === "Expiring Soon") {
+      return "bg-red-50 text-red-600";
+    }
+
+    if (status === "Upcoming") {
+      return "bg-amber-50 text-amber-600";
+    }
+
+    return "bg-emerald-50 text-emerald-600";
+  };
+
+  const getDaysStyle = (days) => {
+    if (days < 0) {
+      return "bg-red-50 text-red-600";
+    }
+
+    if (days <= 30) {
+      return "bg-red-50 text-red-600";
+    }
+
+    if (days <= 90) {
+      return "bg-amber-50 text-amber-600";
+    }
+
+    return "bg-emerald-50 text-emerald-600";
+  };
+
+  // =========================================================
+  // SUMMARY CARD
+  // =========================================================
+
+const SummaryCard = ({
+  icon,
+  title,
+  count,
+  description,
+  color,
+}) => {
+  const colors = {
+    red: {
+      card: "bg-[#FFF1F1] border-[#FFD9D9]",
+      icon: "bg-[#FFE1E1] text-red-500",
+      title: "text-red-600",
+      count: "text-slate-800",
+    },
+
+    amber: {
+      card: "bg-[#FFFBEA] border-[#F5E7A8]",
+      icon: "bg-[#FFF2BF] text-amber-600",
+      title: "text-amber-700",
+      count: "text-slate-800",
+    },
+
+    green: {
+      card: "bg-[#EFFBF5] border-[#CBEFDF]",
+      icon: "bg-[#DDF8EA] text-emerald-600",
+      title: "text-emerald-700",
+      count: "text-slate-800",
+    },
+
+    purple: {
+      card: "bg-[#FFF1F1] border-[#FFD9D9]",
+      icon: "bg-[#FFE1E1] text-red-500",
+      title: "text-red-600",
+      count: "text-slate-800",
+    },
+  };
+
+  const style = colors[color];
+
+  return (
+    <div
+      className={`
+        flex
+        min-w-0
+        items-center
+        gap-3
+        rounded-xl
+        border
+        ${style.card}
+        px-4
+        py-3
+      `}
+    >
+      {/* ICON */}
+
+      <div
+        className={`
+          flex
+          h-10
+          w-10
+          shrink-0
+          items-center
+          justify-center
+          rounded-full
+          text-lg
+          ${style.icon}
+        `}
+      >
+        {icon}
+      </div>
+
+      {/* TEXT */}
+
+      <div className="min-w-0 flex-1">
+
+        {/* TITLE - NEVER WRAPS */}
+
+        <p
+          className={`
+            whitespace-nowrap
+            text-xs
+            font-semibold
+            leading-4
+            ${style.title}
+          `}
+        >
+          {title}
+        </p>
+
+        {/* COUNT + DESCRIPTION */}
+
+        <div className="mt-1 flex min-w-0 items-center gap-2">
+
+          <p
+            className={`
+              shrink-0
+              text-2xl
+              font-bold
+              leading-none
+              ${style.count}
+            `}
+          >
+            {count}
+          </p>
+
+          <p className="whitespace-nowrap text-[10px] font-medium text-slate-500">
+            {description}
+          </p>
+
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+  // =========================================================
   // RENDER
   // =========================================================
 
   return (
-    <div className="min-h-screen flex bg-[#F3F1F9]">
+    <div className="flex min-h-screen overflow-x-hidden bg-[#F3F1F9]">
+
+      {/* ================================================= */}
+      {/* SIDEBAR */}
+      {/* ================================================= */}
 
       <Sidebar />
 
-      <main className="flex-1 bg-[#F7F4FF] p-5">
+      {/* ================================================= */}
+      {/* MAIN CONTENT */}
+      {/* ================================================= */}
+
+      <main className="min-w-0 flex-1 overflow-x-hidden bg-[#F7F4FF] px-5 py-5">
 
         {/* ================================================= */}
         {/* HEADER */}
@@ -202,12 +332,12 @@ const Reminders = () => {
 
         <div className="mb-5">
 
-          <h1 className="text-2xl font-bold text-violet-700">
+          <h1 className="text-[26px] font-bold tracking-tight text-violet-700">
             Reminders
           </h1>
 
           <p className="mt-1 text-sm text-slate-500">
-            Get notified before your important documents expire.
+            Stay on top of your important document expiry dates.
           </p>
 
         </div>
@@ -218,125 +348,37 @@ const Reminders = () => {
 
         <div className="mb-5 grid grid-cols-4 gap-3">
 
-          {/* Expiring Soon */}
+          <SummaryCard
+            icon="⚠"
+            title="Expiring Soon"
+            count={expiringSoon.length}
+            description="≤ 30 days"
+            color="red"
+          />
 
-          <div className="rounded-xl border border-red-100 bg-red-50 p-3 shadow-sm">
+          <SummaryCard
+            icon="◷"
+            title="Upcoming"
+            count={upcoming.length}
+            description="31–90 days"
+            color="amber"
+          />
 
-            <div className="flex items-center gap-3">
+          <SummaryCard
+            icon="✓"
+            title="All Good"
+            count={allGood.length}
+            description="No action"
+            color="green"
+          />
 
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 text-lg">
-                ⚠️
-              </div>
-
-              <div>
-
-                <p className="text-sm font-semibold text-red-700">
-                  Expiring Soon
-                </p>
-
-                <p className="text-2xl font-bold text-slate-800">
-                  {expiringSoon.length}
-                </p>
-
-                <p className="text-xs text-slate-500">
-                  Within 30 days
-                </p>
-
-              </div>
-
-            </div>
-
-          </div>
-
-          {/* Upcoming */}
-
-          <div className="rounded-xl border border-yellow-100 bg-yellow-50 p-3 shadow-sm">
-
-            <div className="flex items-center gap-3">
-
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100 text-lg">
-                🕐
-              </div>
-
-              <div>
-
-                <p className="text-sm font-semibold text-yellow-700">
-                  Upcoming
-                </p>
-
-                <p className="text-2xl font-bold text-slate-800">
-                  {upcoming.length}
-                </p>
-
-                <p className="text-xs text-slate-500">
-                  Within 3 months
-                </p>
-
-              </div>
-
-            </div>
-
-          </div>
-
-          {/* All Good */}
-
-          <div className="rounded-xl border border-green-100 bg-green-50 p-3 shadow-sm">
-
-            <div className="flex items-center gap-3">
-
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-lg">
-                ✓
-              </div>
-
-              <div>
-
-                <p className="text-sm font-semibold text-green-700">
-                  All Good
-                </p>
-
-                <p className="text-2xl font-bold text-slate-800">
-                  {allGood.length}
-                </p>
-
-                <p className="text-xs text-slate-500">
-                  No expiry / more than 3 months
-                </p>
-
-              </div>
-
-            </div>
-
-          </div>
-
-          {/* Expired */}
-
-          <div className="rounded-xl border border-red-100 bg-red-50 p-3 shadow-sm">
-
-            <div className="flex items-center gap-3">
-
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 text-lg">
-                ✕
-              </div>
-
-              <div>
-
-                <p className="text-sm font-semibold text-red-700">
-                  Expired
-                </p>
-
-                <p className="text-2xl font-bold text-slate-800">
-                  {expired.length}
-                </p>
-
-                <p className="text-xs text-slate-500">
-                  Already expired
-                </p>
-
-              </div>
-
-            </div>
-
-          </div>
+          <SummaryCard
+            icon="×"
+            title="Expired"
+            count={expired.length}
+            description="Renew it"
+            color="purple"
+          />
 
         </div>
 
@@ -344,58 +386,114 @@ const Reminders = () => {
         {/* TABS */}
         {/* ================================================= */}
 
-        <div className="mb-4 flex items-center gap-6 border-b border-[#E5E0F2]">
-
-          {/* All */}
+        <div className="mb-4 flex items-center gap-1 border-b border-[#E4DEEF]">
 
           <button
             onClick={() => setActiveTab("all")}
-            className={`pb-3 text-sm font-semibold ${
-              activeTab === "all"
-                ? "border-b-2 border-violet-600 text-violet-700"
-                : "text-slate-500"
-            }`}
+            className={`
+              relative
+              px-4
+              pb-3
+              text-sm
+              font-semibold
+              transition
+              ${
+                activeTab === "all"
+                  ? "text-violet-700"
+                  : "text-slate-500 hover:text-slate-700"
+              }
+            `}
           >
-            All Reminders ({reminderDocuments.length})
-          </button>
+            All Reminders
 
-          {/* Expired */}
+            <span className="ml-1 text-xs text-slate-400">
+              ({reminderDocuments.length})
+            </span>
+
+            {activeTab === "all" && (
+              <span className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full bg-violet-600" />
+            )}
+          </button>
 
           <button
             onClick={() => setActiveTab("expired")}
-            className={`pb-3 text-sm font-semibold ${
-              activeTab === "expired"
-                ? "border-b-2 border-violet-600 text-violet-700"
-                : "text-slate-500"
-            }`}
+            className={`
+              relative
+              px-4
+              pb-3
+              text-sm
+              font-semibold
+              transition
+              ${
+                activeTab === "expired"
+                  ? "text-violet-700"
+                  : "text-slate-500 hover:text-slate-700"
+              }
+            `}
           >
-            Expired ({expired.length})
-          </button>
+            Expired
 
-          {/* Expiring */}
+            <span className="ml-1 text-xs text-slate-400">
+              ({expired.length})
+            </span>
+
+            {activeTab === "expired" && (
+              <span className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full bg-violet-600" />
+            )}
+          </button>
 
           <button
             onClick={() => setActiveTab("expiring")}
-            className={`pb-3 text-sm font-semibold ${
-              activeTab === "expiring"
-                ? "border-b-2 border-violet-600 text-violet-700"
-                : "text-slate-500"
-            }`}
+            className={`
+              relative
+              px-4
+              pb-3
+              text-sm
+              font-semibold
+              transition
+              ${
+                activeTab === "expiring"
+                  ? "text-violet-700"
+                  : "text-slate-500 hover:text-slate-700"
+              }
+            `}
           >
-            Expiring Soon ({expiringSoon.length})
-          </button>
+            Expiring Soon
 
-          {/* Upcoming */}
+            <span className="ml-1 text-xs text-slate-400">
+              ({expiringSoon.length})
+            </span>
+
+            {activeTab === "expiring" && (
+              <span className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full bg-violet-600" />
+            )}
+          </button>
 
           <button
             onClick={() => setActiveTab("upcoming")}
-            className={`pb-3 text-sm font-semibold ${
-              activeTab === "upcoming"
-                ? "border-b-2 border-violet-600 text-violet-700"
-                : "text-slate-500"
-            }`}
+            className={`
+              relative
+              px-4
+              pb-3
+              text-sm
+              font-semibold
+              transition
+              ${
+                activeTab === "upcoming"
+                  ? "text-violet-700"
+                  : "text-slate-500 hover:text-slate-700"
+              }
+            `}
           >
-            Upcoming ({upcoming.length})
+            Upcoming
+
+            <span className="ml-1 text-xs text-slate-400">
+              ({upcoming.length})
+            </span>
+
+            {activeTab === "upcoming" && (
+              <span className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full bg-violet-600" />
+            )}
           </button>
 
         </div>
@@ -404,73 +502,145 @@ const Reminders = () => {
         {/* DOCUMENTS */}
         {/* ================================================= */}
 
-        <div className="rounded-xl border border-[#ECE8F7] bg-white p-4 shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-[#E6E0EF] bg-white shadow-sm">
+
+          {/* DOCUMENT HEADER */}
+
+          <div className="flex items-center justify-between border-b border-[#EEEAF4] px-5 py-3">
+
+            <div>
+
+              <h2 className="text-sm font-semibold text-slate-800">
+                Documents
+              </h2>
+
+              <p className="mt-0.5 text-[11px] text-slate-400">
+                {filteredDocuments.length} document
+                {filteredDocuments.length !== 1 ? "s" : ""} found
+              </p>
+
+            </div>
+
+          </div>
+
+          {/* LOADING */}
 
           {loading ? (
 
-            <p className="py-8 text-center text-sm text-slate-500">
-              Loading reminders...
-            </p>
+            <div className="py-12 text-center">
+
+              <p className="text-sm text-slate-500">
+                Loading reminders...
+              </p>
+
+            </div>
 
           ) : filteredDocuments.length === 0 ? (
 
-            <div className="py-10 text-center">
+            <div className="py-14 text-center">
 
-              <div className="text-4xl">
-                🎉
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-violet-50 text-lg text-violet-600">
+                ✓
               </div>
 
-              <h3 className="mt-3 text-base font-semibold text-slate-700">
+              <h3 className="mt-3 text-sm font-semibold text-slate-700">
                 No reminders
               </h3>
 
-              <p className="mt-1 text-sm text-slate-500">
-                You don't have any documents in this reminder category.
+              <p className="mt-1 text-xs text-slate-400">
+                No documents are available in this category.
               </p>
 
             </div>
 
           ) : (
 
-            <div className="overflow-hidden rounded-lg border border-[#ECE8F7]">
+            <div className="w-full">
 
-              {/* Table Header */}
+              {/* ================================================= */}
+              {/* TABLE HEADER */}
+              {/* ================================================= */}
 
-              <div className="grid grid-cols-5 bg-[#F8F6FC] px-4 py-3 text-xs font-semibold text-slate-500">
-
+              <div
+                className="
+                  grid
+                  grid-cols-[minmax(170px,2.4fr)_0.8fr_1fr_0.75fr_1.05fr_90px]
+                  items-center
+                  gap-3
+                  border-b
+                  border-[#EEEAF4]
+                  bg-[#FBFAFD]
+                  px-5
+                  py-3
+                  text-[10px]
+                  font-semibold
+                  uppercase
+                  tracking-wide
+                  text-slate-400
+                "
+              >
                 <span>Document</span>
+
                 <span>Category</span>
+
                 <span>Expiry Date</span>
+
                 <span>Days Left</span>
+
                 <span>Status</span>
 
+                <span className="text-right">
+                  Action
+                </span>
               </div>
 
-              {/* Documents */}
+              {/* ================================================= */}
+              {/* DOCUMENT ROWS */}
+              {/* ================================================= */}
 
-              {filteredDocuments.map((document) => (
+              {filteredDocuments.map((document, index) => (
 
                 <div
                   key={document._id}
-                  className="grid grid-cols-5 items-center border-t border-[#ECE8F7] px-4 py-3"
+                  className={`
+                    grid
+                    grid-cols-[minmax(170px,2.4fr)_0.8fr_1fr_0.75fr_1.05fr_90px]
+                    items-center
+                    gap-3
+                    px-5
+                    py-3.5
+                    transition
+                    hover:bg-[#FCFBFF]
+                    ${
+                      index !== 0
+                        ? "border-t border-[#F0EDF5]"
+                        : ""
+                    }
+                  `}
                 >
 
-                  {/* Document */}
+                  {/* DOCUMENT */}
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
 
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-sm">
                       📄
                     </div>
 
-                    <div>
+                    <div className="min-w-0">
 
-                      <p className="text-sm font-semibold text-slate-700">
+                      <p
+                        title={document.documentName}
+                        className="truncate text-[13px] font-semibold text-slate-700"
+                      >
                         {document.documentName}
                       </p>
 
                       {document.documentNumber && (
-                        <p className="text-xs text-slate-400">
+                        <p
+                          title={document.documentNumber}
+                          className="mt-0.5 truncate text-[10px] text-slate-400"
+                        >
                           {document.documentNumber}
                         </p>
                       )}
@@ -479,61 +649,139 @@ const Reminders = () => {
 
                   </div>
 
-                  {/* Category */}
+                  {/* CATEGORY */}
 
-                  <span className="text-xs text-slate-600">
+                  <span className="truncate text-xs text-slate-600">
                     {document.category}
                   </span>
 
-                  {/* Expiry */}
+                  {/* EXPIRY DATE */}
 
                   <span className="text-xs text-slate-600">
-
                     {document.expiryDate
                       ? new Date(
                           document.expiryDate
                         ).toLocaleDateString("en-IN")
                       : "No expiry"}
-
                   </span>
 
-                  {/* Days Left */}
+                  {/* DAYS LEFT */}
 
-                  <span
-                    className={`w-fit rounded-full px-2 py-1 text-xs font-semibold ${
-                      document.daysLeft < 0
-                        ? "bg-red-100 text-red-600"
-                        : document.daysLeft <= 30
-                        ? "bg-red-100 text-red-600"
-                        : document.daysLeft <= 90
-                        ? "bg-yellow-100 text-yellow-700"
-                        : "bg-green-100 text-green-600"
-                    }`}
-                  >
+                  <div>
 
-                    {document.daysLeft === null
-                      ? "No expiry"
-                      : document.daysLeft < 0
-                      ? "Expired"
-                      : `${document.daysLeft} days`}
+                    <span
+                      className={`
+                        inline-flex
+                        whitespace-nowrap
+                        rounded-full
+                        px-2.5
+                        py-1
+                        text-[10px]
+                        font-semibold
+                        ${getDaysStyle(
+                          document.daysLeft
+                        )}
+                      `}
+                    >
+                      {document.daysLeft === null
+                        ? "—"
+                        : document.daysLeft < 0
+                        ? "Expired"
+                        : `${document.daysLeft} days`}
+                    </span>
 
-                  </span>
+                  </div>
 
-                  {/* Status */}
+                  {/* STATUS */}
 
-                  <span
-                    className={`w-fit rounded-full px-2 py-1 text-xs font-semibold ${
-                      document.status === "Expired"
-                        ? "bg-red-100 text-red-600"
-                        : document.status === "Expiring Soon"
-                        ? "bg-red-100 text-red-600"
-                        : document.status === "Upcoming"
-                        ? "bg-yellow-100 text-yellow-700"
-                        : "bg-green-100 text-green-600"
-                    }`}
-                  >
-                    {document.status}
-                  </span>
+                  <div>
+
+                    <span
+                      className={`
+                        inline-flex
+                        whitespace-nowrap
+                        rounded-full
+                        px-2.5
+                        py-1
+                        text-[10px]
+                        font-semibold
+                        ${getStatusStyle(
+                          document.status
+                        )}
+                      `}
+                    >
+                      {document.status}
+                    </span>
+
+                  </div>
+
+                  {/* ACTION */}
+
+                  <div className="flex justify-end">
+
+                    {document.status === "Expiring Soon" && (
+
+                      <button
+                        onClick={() =>
+                          navigate(
+                            `/upload?renew=true&documentId=${document._id}`
+                          )
+                        }
+                        className="
+                          whitespace-nowrap
+                          rounded-lg
+                          bg-violet-600
+                          px-3
+                          py-2
+                          text-[10px]
+                          font-semibold
+                          text-white
+                          transition
+                          hover:bg-violet-700
+                          active:scale-[0.98]
+                        "
+                      >
+                        Renew
+                      </button>
+
+                    )}
+
+                    {document.status === "Expired" && (
+
+                      <button
+                        onClick={() =>
+                          navigate(
+                            `/upload?renew=true&documentId=${document._id}`
+                          )
+                        }
+                        className="
+                          whitespace-nowrap
+                          rounded-lg
+                          border
+                          border-violet-200
+                          bg-violet-50
+                          px-3
+                          py-2
+                          text-[10px]
+                          font-semibold
+                          text-violet-700
+                          transition
+                          hover:bg-violet-100
+                        "
+                      >
+                        Renew
+                      </button>
+
+                    )}
+
+                    {document.status !== "Expiring Soon" &&
+                      document.status !== "Expired" && (
+                        <span className="text-xs text-slate-300">
+                          —
+                        </span>
+                      )}
+
+                  </div>
 
                 </div>
 
@@ -546,36 +794,31 @@ const Reminders = () => {
         </div>
 
         {/* ================================================= */}
-        {/* BOTTOM INFO */}
+        {/* INFO BANNER */}
         {/* ================================================= */}
 
-        <div className="mt-5 rounded-xl border border-violet-100 bg-violet-50 p-4">
+        <div className="mt-4 flex items-center gap-3 rounded-xl border border-violet-100 bg-violet-50/60 px-4 py-3">
 
-          <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-sm">
+            🔔
+          </div>
 
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 text-xl">
-              🔔
-            </div>
+          <div className="min-w-0">
 
-            <div>
+            <p className="text-xs font-semibold text-violet-700">
+              Never miss an important date
+            </p>
 
-              <h3 className="text-sm font-semibold text-violet-700">
-                Never miss an important date!
-              </h3>
-
-              <p className="mt-1 text-xs text-slate-500">
-                MemoryVault will help you keep track of your document
-                expiry dates.
-              </p>
-
-            </div>
+            <p className="mt-0.5 text-[11px] text-slate-500">
+              MemoryVault keeps track of your document expiry dates
+              and reminds you when renewal is approaching.
+            </p>
 
           </div>
 
         </div>
 
       </main>
-
     </div>
   );
 };

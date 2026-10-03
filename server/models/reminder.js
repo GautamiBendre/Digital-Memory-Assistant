@@ -19,6 +19,7 @@ const reminderSchema = new mongoose.Schema(
       enum: [
         "30_days",
         "15_days",
+        "7_days",
         "3_days",
         "expiry_day",
         "1_day_after",
@@ -36,10 +37,15 @@ const reminderSchema = new mongoose.Schema(
   }
 );
 
-// Prevent the same reminder from being sent twice
+// Prevent duplicate reminders for the same document + reminder type
 reminderSchema.index(
-  { document: 1, type: 1 },
-  { unique: true }
+  {
+    document: 1,
+    type: 1,
+  },
+  {
+    unique: true,
+  }
 );
 
 const Reminder =

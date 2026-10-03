@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+
 import Sidebar from "../components/Sidebar";
 
 const categories = [
@@ -13,6 +15,13 @@ const categories = [
 ];
 
 const UploadDocument = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  // Renewal mode
+  const isRenewal = searchParams.get("renew") === "true";
+  const previousDocumentId = searchParams.get("documentId");
+
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [extractedData, setExtractedData] = useState(null);
@@ -66,15 +75,26 @@ const UploadDocument = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || data.message);
+        throw new Error(
+          data.error ||
+            data.message ||
+            "Failed to analyze document."
+        );
       }
 
-      console.log("Gemini extracted data:", data.extractedData);
+      console.log(
+        "Gemini extracted data:",
+        data.extractedData
+      );
 
       setExtractedData(data.extractedData);
     } catch (error) {
       console.error("Analysis Error:", error);
-      alert("Failed to analyze document.");
+
+      alert(
+        error.message ||
+          "Failed to analyze document."
+      );
     } finally {
       setLoading(false);
     }
@@ -89,6 +109,12 @@ const UploadDocument = () => {
     setPreviewUrl(null);
     setExtractedData(null);
     setShowCategory(false);
+
+    // If user came from Renew Now,
+    // return to Reminders.
+    if (isRenewal) {
+      navigate("/reminders");
+    }
   };
 
   // =========================================================
@@ -100,16 +126,28 @@ const UploadDocument = () => {
   };
 
   // =========================================================
-  // SAVE DOCUMENT
+  // SAVE / RENEW DOCUMENT
   // =========================================================
 
   const handleFinalSave = async () => {
+    if (!selectedFile || !extractedData) {
+      alert("Please select and analyze a document first.");
+      return;
+    }
+
+    if (isRenewal && !previousDocumentId) {
+      alert(
+        "Previous document information is missing."
+      );
+      return;
+    }
+
     try {
       setLoading(true);
 
       const formData = new FormData();
 
-      // Original uploaded file
+      // New uploaded file
       formData.append("file", selectedFile);
 
       // AI extracted information
@@ -139,31 +177,52 @@ const UploadDocument = () => {
       );
 
       // User-selected category
-      formData.append("category", selectedCategory);
+      formData.append(
+        "category",
+        selectedCategory
+      );
+
+      // Renewal only
+      if (isRenewal) {
+        formData.append(
+          "previousDocumentId",
+          previousDocumentId
+        );
+      }
 
       // JWT token
       const token = localStorage.getItem("token");
 
-      const response = await fetch(
-        "http://localhost:5000/api/documents",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        }
-      );
+      // Choose API based on mode
+      const apiUrl = isRenewal
+        ? "http://localhost:5000/api/documents/renew"
+        : "http://localhost:5000/api/documents";
+
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
 
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data.message || "Failed to save document."
+          data.message ||
+            (isRenewal
+              ? "Failed to renew document."
+              : "Failed to save document.")
         );
       }
 
-      console.log("Document saved:", data);
+      console.log(
+        isRenewal
+          ? "Document renewed:"
+          : "Document saved:",
+        data
+      );
 
       // Show success popup
       setShowSuccess(true);
@@ -177,12 +236,26 @@ const UploadDocument = () => {
         setExtractedData(null);
         setShowCategory(false);
         setSelectedCategory("Personal");
-      }, 3000);
+
+        // After renewal go back to reminders
+        if (isRenewal) {
+          navigate("/reminders");
+        }
+      }, 1500);
+
     } catch (error) {
-      console.error("Save Document Error:", error);
+      console.error(
+        isRenewal
+          ? "Renew Document Error:"
+          : "Save Document Error:",
+        error
+      );
 
       alert(
-        error.message || "Failed to save document."
+        error.message ||
+          (isRenewal
+            ? "Failed to renew document."
+            : "Failed to save document.")
       );
     } finally {
       setLoading(false);
@@ -195,6 +268,7 @@ const UploadDocument = () => {
 
   return (
     <div className="min-h-screen flex bg-[#F3F1F9]">
+
       <Sidebar />
 
       <main className="flex-1 p-4 bg-[#F7F4FF]">
@@ -204,14 +278,19 @@ const UploadDocument = () => {
         {/* ================================================= */}
 
         <div className="mb-4">
+
           <h1 className="text-2xl font-bold text-violet-700">
-            Upload Document
+            {isRenewal
+              ? "Renew Document"
+              : "Upload Document"}
           </h1>
 
           <p className="mt-1 text-sm text-slate-500">
-            Upload your document and let AI extract the important
-            information.
+            {isRenewal
+              ? "Upload the renewed document and let AI extract the important information."
+              : "Upload your document and let AI extract the important information."}
           </p>
+
         </div>
 
         {/* ================================================= */}
@@ -219,6 +298,7 @@ const UploadDocument = () => {
         {/* ================================================= */}
 
         {!extractedData && (
+
           <div className="grid grid-cols-3 gap-4">
 
             {/* Upload Card */}
@@ -226,13 +306,16 @@ const UploadDocument = () => {
             <div className="col-span-2 rounded-xl border border-[#ECE8F7] bg-white p-4 shadow-sm">
 
               <h2 className="mb-3 text-lg font-semibold text-slate-900">
-                Upload File
+                {isRenewal
+                  ? "Upload Renewed File"
+                  : "Upload File"}
               </h2>
 
               <label
                 htmlFor="fileInput"
                 className="flex h-48 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-violet-200 bg-violet-50 hover:bg-violet-100"
               >
+
                 <div className="mb-2 text-3xl text-violet-600">
                   ☁
                 </div>
@@ -256,12 +339,15 @@ const UploadDocument = () => {
                   className="hidden"
                   onChange={handleFileChange}
                 />
+
               </label>
 
               {/* Selected File */}
 
               {selectedFile && (
+
                 <div className="mt-2 rounded-lg bg-violet-50 px-3 py-2">
+
                   <p className="text-xs font-semibold text-slate-700">
                     Selected File
                   </p>
@@ -269,12 +355,15 @@ const UploadDocument = () => {
                   <p className="text-sm text-slate-500">
                     {selectedFile.name}
                   </p>
+
                 </div>
+
               )}
 
               {/* Analyze */}
 
               <div className="mt-3 flex justify-end">
+
                 <button
                   onClick={handleAnalyze}
                   disabled={!selectedFile || loading}
@@ -284,7 +373,9 @@ const UploadDocument = () => {
                     ? "Analyzing..."
                     : "Upload & Analyze"}
                 </button>
+
               </div>
+
             </div>
 
             {/* Preview */}
@@ -298,20 +389,27 @@ const UploadDocument = () => {
               <div className="mt-3 flex h-48 items-center justify-center overflow-hidden rounded-xl bg-[#FBFAFF]">
 
                 {previewUrl ? (
+
                   <img
                     src={previewUrl}
                     alt="Document Preview"
                     className="h-full w-full object-contain"
                   />
+
                 ) : (
+
                   <p className="text-sm text-slate-400">
                     No document selected
                   </p>
+
                 )}
 
               </div>
+
             </div>
+
           </div>
+
         )}
 
         {/* ================================================= */}
@@ -319,6 +417,7 @@ const UploadDocument = () => {
         {/* ================================================= */}
 
         {extractedData && !showCategory && (
+
           <div className="rounded-xl border border-[#ECE8F7] bg-white p-3 shadow-sm">
 
             <h2 className="text-lg font-semibold text-slate-900">
@@ -372,8 +471,9 @@ const UploadDocument = () => {
               {/* Additional Information */}
 
               {extractedData.additionalInformation &&
-                Object.keys(extractedData.additionalInformation).length >
-                  0 && (
+                Object.keys(
+                  extractedData.additionalInformation
+                ).length > 0 && (
 
                   <div className="mt-2 border-t border-violet-100 pt-2">
 
@@ -386,16 +486,21 @@ const UploadDocument = () => {
                       {Object.entries(
                         extractedData.additionalInformation
                       ).map(([key, value]) => (
+
                         <Info
                           key={key}
                           label={key}
                           value={value}
                         />
+
                       ))}
 
                     </div>
+
                   </div>
+
                 )}
+
             </div>
 
             {/* Buttons */}
@@ -417,7 +522,9 @@ const UploadDocument = () => {
               </button>
 
             </div>
+
           </div>
+
         )}
 
         {/* ================================================= */}
@@ -425,6 +532,7 @@ const UploadDocument = () => {
         {/* ================================================= */}
 
         {extractedData && showCategory && (
+
           <div className="max-w-xl rounded-xl border border-[#ECE8F7] bg-white p-5 shadow-sm">
 
             <h2 className="text-xl font-semibold text-slate-900">
@@ -432,7 +540,9 @@ const UploadDocument = () => {
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">
-              Choose where you want to store this document.
+              {isRenewal
+                ? "Choose the category for your renewed document."
+                : "Choose where you want to store this document."}
             </p>
 
             <select
@@ -442,14 +552,18 @@ const UploadDocument = () => {
               }
               className="mt-4 w-full rounded-lg border border-violet-100 bg-[#FBFAFF] px-4 py-2.5 text-sm text-slate-700 outline-none focus:border-violet-400"
             >
+
               {categories.map((category) => (
+
                 <option
                   key={category}
                   value={category}
                 >
                   {category}
                 </option>
+
               ))}
+
             </select>
 
             <div className="mt-4 flex justify-end gap-2">
@@ -467,12 +581,18 @@ const UploadDocument = () => {
                 className="rounded-lg bg-violet-600 px-5 py-2 text-sm font-semibold text-white hover:bg-violet-700 disabled:cursor-not-allowed disabled:bg-violet-300"
               >
                 {loading
-                  ? "Saving..."
+                  ? isRenewal
+                    ? "Renewing..."
+                    : "Saving..."
+                  : isRenewal
+                  ? "Renew Document"
                   : "Save Document"}
               </button>
 
             </div>
+
           </div>
+
         )}
 
         {/* ================================================= */}
@@ -480,19 +600,27 @@ const UploadDocument = () => {
         {/* ================================================= */}
 
         {showSuccess && (
+
           <div className="fixed right-6 top-6 z-50 rounded-lg bg-green-500 px-5 py-3 text-sm font-semibold text-white shadow-lg">
-            ✓ Document saved successfully
+
+            ✓{" "}
+            {isRenewal
+              ? "Document renewed successfully"
+              : "Document saved successfully"}
+
           </div>
+
         )}
 
       </main>
+
     </div>
   );
 };
 
-/* ================================================= */
-/* INFORMATION COMPONENT */
-/* ================================================= */
+// =========================================================
+// INFORMATION COMPONENT
+// =========================================================
 
 const Info = ({ label, value }) => {
   let displayValue;
@@ -503,24 +631,12 @@ const Info = ({ label, value }) => {
     value === ""
   ) {
     displayValue = "Not available";
+
   } else if (typeof value === "object") {
-    /*
-      FIX:
-      Gemini can return an object instead of a string.
-
-      Example:
-      {
-        subjectCode: "CS101",
-        subjectName: "Computer Science",
-        marksInFigures: "85",
-        marksInWords: "Eighty Five"
-      }
-
-      React cannot directly render this object.
-    */
 
     displayValue = Object.entries(value)
       .map(([key, val]) => {
+
         if (
           val !== null &&
           typeof val === "object"
@@ -529,14 +645,17 @@ const Info = ({ label, value }) => {
         }
 
         return `${key}: ${val}`;
+
       })
       .join(" • ");
+
   } else {
     displayValue = String(value);
   }
 
   return (
     <div className="min-w-0">
+
       <p className="text-[10px] leading-4 text-slate-400">
         {label}
       </p>
@@ -547,6 +666,7 @@ const Info = ({ label, value }) => {
       >
         {displayValue}
       </p>
+
     </div>
   );
 };
