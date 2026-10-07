@@ -11,6 +11,8 @@ import {
   MdCloudUpload,
   MdFolderOpen,
   MdPersonOutline,
+  MdChevronLeft,
+  MdChevronRight,
 } from "react-icons/md";
 
 import Sidebar from "../components/Sidebar";
@@ -351,6 +353,14 @@ export default function DashboardHome() {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Calendar
+  const [calendarDate, setCalendarDate] = useState(
+    new Date()
+  );
+
+  const [selectedCalendarDate, setSelectedCalendarDate] =
+    useState(null);
+
   // =========================================================
   // FETCH DOCUMENTS
   // =========================================================
@@ -530,33 +540,173 @@ export default function DashboardHome() {
   // =========================================================
 
   const getPriorityStyles = (document) => {
-    const status = getStatus(document);
+  const status = getStatus(document);
 
-    if (status === "Expired") {
-      return {
-        days: "bg-red-50 text-red-600",
-        status: "bg-red-50 text-red-600",
-      };
-    }
-
-    if (status === "Expiring Soon") {
-      return {
-        days: "bg-red-50 text-red-600",
-        status: "bg-red-50 text-red-600",
-      };
-    }
-
-    if (status === "Upcoming") {
-      return {
-        days: "bg-amber-50 text-amber-600",
-        status: "bg-amber-50 text-amber-600",
-      };
-    }
-
+  if (status === "Expired") {
     return {
-      days: "bg-emerald-50 text-emerald-600",
-      status: "bg-emerald-50 text-emerald-600",
+      days: "bg-red-100 text-red-700",
+      status: "bg-red-100 text-red-700",
     };
+  }
+
+  if (status === "Expiring Soon") {
+    return {
+      days: "bg-orange-100 text-orange-600",
+      status: "bg-orange-100 text-orange-600",
+    };
+  }
+
+  if (status === "Upcoming") {
+    return {
+      days: "bg-amber-50 text-amber-600",
+      status: "bg-amber-50 text-amber-600",
+    };
+  }
+
+  return {
+    days: "bg-emerald-50 text-emerald-600",
+    status: "bg-emerald-50 text-emerald-600",
+  };
+};
+
+  // =========================================================
+  // CALENDAR HELPERS
+  // =========================================================
+
+  const getDateKey = (date) => {
+    const year = date.getFullYear();
+    const month = String(
+      date.getMonth() + 1
+    ).padStart(2, "0");
+    const day = String(
+      date.getDate()
+    ).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  };
+
+  const getDocumentDateKey = (expiryDate) => {
+    if (!expiryDate) return null;
+
+    return getDateKey(
+      new Date(expiryDate)
+    );
+  };
+
+  const getCalendarDocuments = (date) => {
+    const key = getDateKey(date);
+
+    return documents.filter(
+      (document) =>
+        getDocumentDateKey(
+          document.expiryDate
+        ) === key
+    );
+  };
+
+  const getCalendarDays = () => {
+    const year =
+      calendarDate.getFullYear();
+
+    const month =
+      calendarDate.getMonth();
+
+    const firstDay = new Date(
+      year,
+      month,
+      1
+    ).getDay();
+
+    const daysInMonth = new Date(
+      year,
+      month + 1,
+      0
+    ).getDate();
+
+    const days = [];
+
+    for (
+      let index = 0;
+      index < firstDay;
+      index += 1
+    ) {
+      days.push(null);
+    }
+
+    for (
+      let day = 1;
+      day <= daysInMonth;
+      day += 1
+    ) {
+      days.push(
+        new Date(
+          year,
+          month,
+          day
+        )
+      );
+    }
+
+    while (days.length % 7 !== 0) {
+      days.push(null);
+    }
+
+    return days;
+  };
+
+  const calendarDays =
+    getCalendarDays();
+
+  const calendarMonthLabel =
+    calendarDate.toLocaleDateString(
+      "en-IN",
+      {
+        month: "long",
+        year: "numeric",
+      }
+    );
+
+  const todayKey =
+    getDateKey(new Date());
+
+  const getCalendarDotClass = (document) => {
+  const status = getStatus(document);
+
+  if (status === "Expired") {
+    return "bg-red-700";
+  }
+
+  if (status === "Expiring Soon") {
+    return "bg-orange-500";
+  }
+
+  if (status === "Upcoming") {
+    return "bg-amber-400";
+  }
+
+  return "bg-emerald-500";
+};
+  const selectedCalendarDocuments =
+    selectedCalendarDate
+      ? getCalendarDocuments(
+          selectedCalendarDate
+        )
+      : [];
+
+  const changeCalendarMonth = (
+    amount
+  ) => {
+    setCalendarDate(
+      (currentDate) =>
+        new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth() +
+            amount,
+          1
+        )
+    );
+
+    setSelectedCalendarDate(null);
   };
 
   // =========================================================
@@ -565,7 +715,6 @@ export default function DashboardHome() {
 
   return (
     <div className="flex min-h-screen w-full bg-[#F3F1F9]">
-
       {/* SIDEBAR */}
       <Sidebar />
 
@@ -577,7 +726,6 @@ export default function DashboardHome() {
         {/* ================================================= */}
 
         <div className="mb-5 flex h-[145px] items-center justify-between overflow-hidden rounded-2xl bg-purple-200 px-7">
-
           <div className="flex-1">
 
             <h1 className="text-[19px] font-bold leading-tight text-slate-900">
@@ -594,15 +742,12 @@ export default function DashboardHome() {
             <p className="mt-1.5 text-sm text-slate-600">
               Upload, manage and never miss a renewal again.
             </p>
-
           </div>
 
           <div className="h-[125px] w-[210px] shrink-0">
             <WalletIllustration />
           </div>
-
         </div>
-
 
         {/* ================================================= */}
         {/* STATS + QUICK ACTIONS */}
@@ -610,213 +755,197 @@ export default function DashboardHome() {
 
         <div className="grid grid-cols-[160px_160px_360px] gap-3">
 
-          {/* ================================================= */}
           {/* STATISTICS */}
-          {/* ================================================= */}
 
           <div className="col-span-2 grid grid-cols-2 gap-3">
 
             {/* TOTAL DOCUMENTS */}
 
             <div className="flex h-[100px] w-[160px] items-center rounded-2xl border border-[#ECE8F7] bg-white px-3 shadow-sm">
-
               <div className="flex items-center gap-3">
-
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100">
                   <MdOutlineDescription className="text-xl text-violet-600" />
                 </div>
 
                 <div>
                   <p className="text-xl font-bold leading-none text-slate-900">
-                    {loading ? "-" : totalDocuments}
+                    {loading
+                      ? "-"
+                      : totalDocuments}
                   </p>
 
                   <p className="mt-1 text-xs text-slate-500">
                     Total Documents
                   </p>
                 </div>
-
               </div>
-
             </div>
-
 
             {/* EXPIRING SOON */}
 
             <div className="flex h-[100px] w-[160px] items-center rounded-2xl border border-[#ECE8F7] bg-white px-3 shadow-sm">
-
               <div className="flex items-center gap-3">
-
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-100">
                   <MdOutlineAccessTime className="text-xl text-orange-500" />
                 </div>
 
                 <div>
                   <p className="text-xl font-bold leading-none text-slate-900">
-                    {loading ? "-" : expiringSoon}
+                    {loading
+                      ? "-"
+                      : expiringSoon}
                   </p>
 
                   <p className="mt-1 text-xs text-slate-500">
                     Expiring Soon
                   </p>
                 </div>
-
               </div>
-
             </div>
-
 
             {/* VALID DOCUMENTS */}
 
             <div className="flex h-[100px] w-[160px] items-center rounded-2xl border border-[#ECE8F7] bg-white px-3 shadow-sm">
-
               <div className="flex items-center gap-3">
-
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100">
                   <MdOutlineCheckCircle className="text-xl text-emerald-500" />
                 </div>
 
                 <div>
                   <p className="text-xl font-bold leading-none text-slate-900">
-                    {loading ? "-" : validDocuments}
+                    {loading
+                      ? "-"
+                      : validDocuments}
                   </p>
 
                   <p className="mt-1 text-xs text-slate-500">
                     Valid Documents
                   </p>
                 </div>
-
               </div>
-
             </div>
-
 
             {/* DOCUMENT CATEGORIES */}
 
             <div className="flex h-[100px] w-[160px] items-center rounded-2xl border border-[#ECE8F7] bg-white px-3 shadow-sm">
-
               <div className="flex items-center gap-3">
-
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100">
                   <MdOutlineFolder className="text-xl text-violet-600" />
                 </div>
 
                 <div>
                   <p className="text-xl font-bold leading-none text-slate-900">
-                    {loading ? "-" : categoriesCount}
+                    {loading
+                      ? "-"
+                      : categoriesCount}
                   </p>
 
                   <p className="mt-1 text-xs text-slate-500">
                     Document Categories
                   </p>
                 </div>
-
               </div>
-
             </div>
-
           </div>
 
+          {/* QUICK ACTIONS */}
 
-         {/* ================================================= */}
-{/* QUICK ACTIONS */}
-{/* ================================================= */}
+          <div className="h-[212px] w-[320px] rounded-2xl border border-[#ECE8F7] bg-white p-4 shadow-sm">
+            <h2 className="mb-3 text-base font-bold text-slate-900">
+              Quick Actions
+            </h2>
 
-<div className="h-[212px] w-[320px] rounded-2xl border border-[#ECE8F7] bg-white p-4 shadow-sm">
+            <div className="grid grid-cols-2 gap-3">
 
-  <h2 className="mb-3 text-base font-bold text-slate-900">
-    Quick Actions
-  </h2>
+              {/* UPLOAD */}
 
-  <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() =>
+                  navigate("/upload")
+                }
+                className="flex h-[64px] w-full flex-col items-center justify-center rounded-xl border border-[#ECE8F7] bg-[#FCFAFF] transition hover:border-violet-200 hover:bg-violet-50"
+              >
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
+                  <MdCloudUpload className="text-base" />
+                </div>
 
-    {/* UPLOAD */}
+                <p className="mt-1 text-xs font-semibold leading-none text-slate-700">
+                  Upload
+                </p>
 
-    <button
-      onClick={() => navigate("/upload")}
-      className="flex h-[64px] w-full flex-col items-center justify-center rounded-xl border border-[#ECE8F7] bg-[#FCFAFF] transition hover:border-violet-200 hover:bg-violet-50"
-    >
-      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
-        <MdCloudUpload className="text-base" />
-      </div>
+                <p className="mt-1 text-[10px] leading-none text-slate-400">
+                  Document
+                </p>
+              </button>
 
-      <p className="mt-1 text-xs font-semibold leading-none text-slate-700">
-        Upload
-      </p>
+              {/* VIEW ALL */}
 
-      <p className="mt-1 text-[10px] leading-none text-slate-400">
-        Document
-      </p>
-    </button>
+              <button
+                onClick={() =>
+                  navigate("/documents")
+                }
+                className="flex h-[64px] w-full flex-col items-center justify-center rounded-xl border border-[#ECE8F7] bg-[#FCFAFF] transition hover:border-violet-200 hover:bg-violet-50"
+              >
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
+                  <MdFolderOpen className="text-base" />
+                </div>
 
+                <p className="mt-1 text-xs font-semibold leading-none text-slate-700">
+                  View All
+                </p>
 
-    {/* VIEW ALL */}
+                <p className="mt-1 text-[10px] leading-none text-slate-400">
+                  Documents
+                </p>
+              </button>
 
-    <button
-      onClick={() => navigate("/documents")}
-      className="flex h-[64px] w-full flex-col items-center justify-center rounded-xl border border-[#ECE8F7] bg-[#FCFAFF] transition hover:border-violet-200 hover:bg-violet-50"
-    >
-      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
-        <MdFolderOpen className="text-base" />
-      </div>
+              {/* REMINDERS */}
 
-      <p className="mt-1 text-xs font-semibold leading-none text-slate-700">
-        View All
-      </p>
+              <button
+                onClick={() =>
+                  navigate("/reminders")
+                }
+                className="flex h-[64px] w-full flex-col items-center justify-center rounded-xl border border-[#FDE2E2] bg-[#FFFDFD] transition hover:border-red-200 hover:bg-red-50"
+              >
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-50 text-red-500">
+                  <MdOutlineNotifications className="text-base" />
+                </div>
 
-      <p className="mt-1 text-[10px] leading-none text-slate-400">
-        Documents
-      </p>
-    </button>
+                <p className="mt-1 text-xs font-semibold leading-none text-slate-700">
+                  Check
+                </p>
 
+                <p className="mt-1 text-[10px] leading-none text-slate-400">
+                  Reminders
+                </p>
+              </button>
 
-    {/* REMINDERS */}
+              {/* PROFILE */}
 
-    <button
-      onClick={() => navigate("/reminders")}
-      className="flex h-[64px] w-full flex-col items-center justify-center rounded-xl border border-[#FDE2E2] bg-[#FFFDFD] transition hover:border-red-200 hover:bg-red-50"
-    >
-      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-50 text-red-500">
-        <MdOutlineNotifications className="text-base" />
-      </div>
+              <button
+                onClick={() =>
+                  navigate("/profile")
+                }
+                className="flex h-[64px] w-full flex-col items-center justify-center rounded-xl border border-[#ECE8F7] bg-[#FCFAFF] transition hover:border-violet-200 hover:bg-violet-50"
+              >
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
+                  <MdPersonOutline className="text-base" />
+                </div>
 
-      <p className="mt-1 text-xs font-semibold leading-none text-slate-700">
-        Check
-      </p>
+                <p className="mt-1 text-xs font-semibold leading-none text-slate-700">
+                  Manage
+                </p>
 
-      <p className="mt-1 text-[10px] leading-none text-slate-400">
-        Reminders
-      </p>
-    </button>
-
-
-    {/* PROFILE */}
-
-    <button
-      onClick={() => navigate("/profile")}
-      className="flex h-[64px] w-full flex-col items-center justify-center rounded-xl border border-[#ECE8F7] bg-[#FCFAFF] transition hover:border-violet-200 hover:bg-violet-50"
-    >
-      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
-        <MdPersonOutline className="text-base" />
-      </div>
-
-      <p className="mt-1 text-xs font-semibold leading-none text-slate-700">
-        Manage
-      </p>
-
-      <p className="mt-1 text-[10px] leading-none text-slate-400">
-        Profile
-      </p>
-    </button>
-
-  </div>
-
-</div>
+                <p className="mt-1 text-[10px] leading-none text-slate-400">
+                  Profile
+                </p>
+              </button>
+            </div>
+          </div>
         </div>
 
-
         {/* ================================================= */}
-        {/* PRIORITY REMINDERS + EXPIRY TIMELINE */}
+        {/* PRIORITY REMINDERS + EXPIRY CALENDAR */}
         {/* ================================================= */}
 
         <div className="mt-4 grid grid-cols-3 gap-4">
@@ -828,9 +957,7 @@ export default function DashboardHome() {
           <div className="col-span-2 rounded-2xl border border-[#ECE8F7] bg-white p-5 shadow-sm">
 
             <div className="mb-4 flex items-start justify-between">
-
               <div>
-
                 <h2 className="text-base font-bold text-slate-900">
                   Priority Reminders
                 </h2>
@@ -839,7 +966,6 @@ export default function DashboardHome() {
                   Documents sorted by expiry date
                   (earliest first).
                 </p>
-
               </div>
 
               <button
@@ -851,20 +977,14 @@ export default function DashboardHome() {
                 View All
                 <MdOutlineArrowForward />
               </button>
-
             </div>
 
-
             {loading ? (
-
               <div className="py-10 text-center text-sm text-slate-400">
                 Loading documents...
               </div>
-
             ) : priorityDocuments.length === 0 ? (
-
               <div className="rounded-xl border border-dashed border-[#E8E1F3] py-10 text-center">
-
                 <MdOutlineCheckCircle className="mx-auto text-3xl text-emerald-500" />
 
                 <p className="mt-2 text-sm font-semibold text-slate-700">
@@ -874,16 +994,12 @@ export default function DashboardHome() {
                 <p className="mt-1 text-xs text-slate-400">
                   Your documents are looking good.
                 </p>
-
               </div>
-
             ) : (
-
               <div className="space-y-2">
 
                 {priorityDocuments.map(
                   (document) => {
-
                     const daysLeft =
                       getDaysLeft(
                         document.expiryDate
@@ -902,18 +1018,15 @@ export default function DashboardHome() {
                         key={document._id}
                         className="flex items-center gap-4 rounded-xl border border-[#ECE8F7] px-4 py-3 transition hover:bg-[#FBFAFF]"
                       >
-
                         {/* ICON */}
 
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50">
                           <MdOutlineDescription className="text-xl text-violet-500" />
                         </div>
 
-
                         {/* DOCUMENT INFO */}
 
                         <div className="min-w-0 flex-1">
-
                           <p
                             title={
                               document.documentName
@@ -930,14 +1043,11 @@ export default function DashboardHome() {
                               ? ` • ${document.documentNumber}`
                               : ""}
                           </p>
-
                         </div>
-
 
                         {/* EXPIRY DATE */}
 
                         <div className="hidden min-w-[85px] sm:block">
-
                           <p className="text-[10px] text-slate-400">
                             Expiry
                           </p>
@@ -947,9 +1057,7 @@ export default function DashboardHome() {
                               document.expiryDate
                             )}
                           </p>
-
                         </div>
-
 
                         {/* DAYS */}
 
@@ -969,7 +1077,6 @@ export default function DashboardHome() {
                           )}
                         </span>
 
-
                         {/* STATUS */}
 
                         <span
@@ -988,7 +1095,6 @@ export default function DashboardHome() {
                           {status}
                         </span>
 
-
                         {/* ARROW */}
 
                         <button
@@ -1001,37 +1107,31 @@ export default function DashboardHome() {
                         >
                           <MdOutlineArrowForward />
                         </button>
-
                       </div>
                     );
                   }
                 )}
-
               </div>
-
             )}
-
           </div>
 
-
           {/* ================================================= */}
-          {/* EXPIRY TIMELINE */}
+          {/* EXPIRY CALENDAR */}
           {/* ================================================= */}
 
           <div className="rounded-2xl border border-[#ECE8F7] bg-white p-5 shadow-sm">
 
-            <div className="mb-4 flex items-center justify-between">
+            {/* CALENDAR HEADER */}
 
+            <div className="mb-4 flex items-start justify-between">
               <div>
-
                 <h2 className="text-base font-bold text-slate-900">
-                  Expiry Timeline
+                  Expiry Calendar
                 </h2>
 
                 <p className="mt-1 text-xs text-slate-500">
-                  Upcoming document dates
+                  Track your document expiry dates.
                 </p>
-
               </div>
 
               <button
@@ -1039,152 +1139,273 @@ export default function DashboardHome() {
                   navigate("/reminders")
                 }
                 className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-50 text-violet-600 transition hover:bg-violet-100"
+                title="View all reminders"
               >
                 <MdOutlineArrowForward />
               </button>
-
             </div>
 
+            {/* MONTH NAVIGATION */}
 
-            {priorityDocuments.length === 0 ? (
+            <div className="mb-3 flex items-center justify-between rounded-xl bg-[#FBF9FF] px-2 py-2">
+              <button
+                type="button"
+                onClick={() =>
+                  changeCalendarMonth(-1)
+                }
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-violet-100 hover:text-violet-600"
+                aria-label="Previous month"
+              >
+                <MdChevronLeft className="text-xl" />
+              </button>
 
-              <p className="py-5 text-center text-xs text-slate-400">
-                No expiry dates available.
+              <p className="text-sm font-bold text-slate-800">
+                {calendarMonthLabel}
               </p>
 
-            ) : (
+              <button
+                type="button"
+                onClick={() =>
+                  changeCalendarMonth(1)
+                }
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-violet-100 hover:text-violet-600"
+                aria-label="Next month"
+              >
+                <MdChevronRight className="text-xl" />
+              </button>
+            </div>
 
-              <div className="relative space-y-5">
+            {/* WEEK DAYS */}
 
-                {/* TIMELINE LINE */}
+            <div className="mb-1 grid grid-cols-7">
+              {[
+                "S",
+                "M",
+                "T",
+                "W",
+                "T",
+                "F",
+                "S",
+              ].map(
+                (day, index) => (
+                  <div
+                    key={`${day}-${index}`}
+                    className="py-1 text-center text-[9px] font-semibold text-slate-400"
+                  >
+                    {day}
+                  </div>
+                )
+              )}
+            </div>
 
-                <div className="absolute bottom-4 left-[5px] top-4 w-px bg-[#E9E2F2]" />
+            {/* CALENDAR DAYS */}
 
+            <div className="grid grid-cols-7 gap-y-1">
+              {calendarDays.map(
+                (date, index) => {
+                  if (!date) {
+                    return (
+                      <div
+                        key={`empty-${index}`}
+                        className="h-9"
+                      />
+                    );
+                  }
 
-                {priorityDocuments
-                  .slice(0, 4)
-                  .map((document) => {
+                  const dateKey =
+                    getDateKey(date);
+
+                  const dayDocuments =
+                    getCalendarDocuments(
+                      date
+                    );
+
+                  const isToday =
+                    dateKey === todayKey;
+
+                  const isSelected =
+                    selectedCalendarDate &&
+                    dateKey ===
+                      getDateKey(
+                        selectedCalendarDate
+                      );
+
+                  return (
+                    <button
+                      type="button"
+                      key={dateKey}
+                      onClick={() =>
+                        setSelectedCalendarDate(
+                          dayDocuments.length
+                            ? date
+                            : null
+                        )
+                      }
+                      className={`
+                        relative
+                        mx-auto
+                        flex
+                        h-9
+                        w-9
+                        flex-col
+                        items-center
+                        justify-center
+                        rounded-lg
+                        text-[11px]
+                        transition
+                        ${
+                          isSelected
+                            ? "bg-violet-600 font-bold text-white"
+                            : isToday
+                            ? "bg-violet-50 font-bold text-violet-700 ring-1 ring-violet-200"
+                            : dayDocuments.length
+                            ? "font-semibold text-slate-700 hover:bg-violet-50"
+                            : "text-slate-500 hover:bg-slate-50"
+                        }
+                      `}
+                    >
+                      <span>
+                        {date.getDate()}
+                      </span>
+
+                      {/* EXPIRY DOTS */}
+
+                      {dayDocuments.length >
+                        0 && (
+                        <span className="absolute bottom-0.5 flex items-center gap-0.5">
+                          {dayDocuments
+                            .slice(0, 3)
+                            .map(
+                              (document) => (
+                                <span
+                                  key={
+                                    document._id
+                                  }
+                                  className={`
+                                    h-1
+                                    w-1
+                                    rounded-full
+                                    ${getCalendarDotClass(
+                                      document
+                                    )}
+                                  `}
+                                />
+                              )
+                            )}
+                        </span>
+                      )}
+                    </button>
+                  );
+                }
+              )}
+            </div>
+
+            {/* LEGEND */}
+
+            <div className="mt-4 grid grid-cols-2 gap-x-2 gap-y-2 border-t border-[#F0ECF6] pt-3">
+
+              <div className="flex items-center gap-1.5 text-[9px] text-slate-500">
+                <span className="h-2 w-2 rounded-full bg-red-500" />
+                Expiring soon
+              </div>
+
+              <div className="flex items-center gap-1.5 text-[9px] text-slate-500">
+                <span className="h-2 w-2 rounded-full bg-red-600" />
+                Expired
+              </div>
+
+              <div className="flex items-center gap-1.5 text-[9px] text-slate-500">
+                <span className="h-2 w-2 rounded-full bg-amber-500" />
+                Upcoming
+              </div>
+
+              <div className="flex items-center gap-1.5 text-[9px] text-slate-500">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                Valid
+              </div>
+            </div>
+
+            {/* SELECTED DATE */}
+
+            {selectedCalendarDate && (
+              <div className="mt-3 rounded-xl bg-[#FBF9FF] p-3">
+
+                <p className="text-[10px] font-semibold text-violet-600">
+                  {selectedCalendarDate.toLocaleDateString(
+                    "en-IN",
+                    {
+                      day: "numeric",
+                      month: "long",
+                    }
+                  )}
+                </p>
+
+                {selectedCalendarDocuments.map(
+                  (document) => {
+                    const status =
+                      getStatus(
+                        document
+                      );
 
                     const daysLeft =
                       getDaysLeft(
                         document.expiryDate
                       );
 
-                    const status =
-                      getStatus(document);
-
-                    let dotColor =
-                      "bg-emerald-500";
-
-                    let textColor =
-                      "text-emerald-600";
-
-                    if (
-                      status ===
-                      "Expiring Soon"
-                    ) {
-                      dotColor =
-                        "bg-red-500";
-
-                      textColor =
-                        "text-red-600";
-                    }
-
-                    if (
-                      status === "Upcoming"
-                    ) {
-                      dotColor =
-                        "bg-amber-500";
-
-                      textColor =
-                        "text-amber-600";
-                    }
-
-                    if (
-                      status === "Expired"
-                    ) {
-                      dotColor =
-                        "bg-red-600";
-
-                      textColor =
-                        "text-red-600";
-                    }
+                    const styles =
+                      getPriorityStyles(
+                        document
+                      );
 
                     return (
-                      <div
+                      <button
+                        type="button"
                         key={document._id}
-                        className="relative flex gap-3"
+                        onClick={() =>
+                          navigate(
+                            "/reminders"
+                          )
+                        }
+                        className="mt-2 flex w-full items-center justify-between gap-2 rounded-lg border border-[#ECE8F7] bg-white px-2.5 py-2 text-left transition hover:border-violet-200 hover:bg-violet-50"
                       >
-
-                        {/* DOT */}
-
-                        <div
-                          className={`
-                            relative
-                            z-10
-                            mt-1
-                            h-3
-                            w-3
-                            shrink-0
-                            rounded-full
-                            ring-4
-                            ring-white
-                            ${dotColor}
-                          `}
-                        />
-
-
-                        {/* CONTENT */}
-
-                        <div className="min-w-0 flex-1">
-
-                          <div className="flex items-start justify-between gap-2">
-
-                            <p
-                              className={`
-                                text-xs
-                                font-bold
-                                ${textColor}
-                              `}
-                            >
-                              {getDaysLabel(
-                                daysLeft
-                              )}
-                            </p>
-
-                            <p className="shrink-0 text-[10px] text-slate-400">
-                              {formatDate(
-                                document.expiryDate
-                              )}
-                            </p>
-
-                          </div>
-
-                          <p
-                            title={
+                        <span className="min-w-0">
+                          <span className="block truncate text-[10px] font-semibold text-slate-700">
+                            {
                               document.documentName
                             }
-                            className="mt-1 truncate text-xs font-medium text-slate-600"
+                          </span>
+
+                          <span
+                            className={`
+                              mt-0.5
+                              inline-flex
+                              rounded-full
+                              px-2
+                              py-0.5
+                              text-[8px]
+                              font-semibold
+                              ${styles.status}
+                            `}
                           >
-                            {document.documentName}
-                          </p>
+                            {status}
+                          </span>
+                        </span>
 
-                        </div>
-
-                      </div>
+                        <span className="shrink-0 text-[9px] font-semibold text-slate-500">
+                          {getDaysLabel(
+                            daysLeft
+                          )}
+                        </span>
+                      </button>
                     );
-                  })}
-
+                  }
+                )}
               </div>
-
             )}
 
           </div>
-
         </div>
-
       </main>
-
     </div>
   );
 }
