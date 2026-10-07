@@ -16,6 +16,7 @@ import {
 } from "react-icons/md";
 
 import Sidebar from "../components/Sidebar";
+import MemoryVaultAssistant from "../components/aiAssistant";
 
 // =========================================================
 // WALLET ILLUSTRATION
@@ -1406,6 +1407,7 @@ export default function DashboardHome() {
           </div>
         </div>
       </main>
+      <MemoryVaultAssistant />
     </div>
   );
 }

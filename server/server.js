@@ -10,6 +10,7 @@ import documentRoutes from "./routes/documentRoutes.js";
 import geminiRoutes from "./routes/geminiRoutes.js";
 import reminderRoutes from "./routes/reminderRoutes.js";
 import { startReminderCron } from "./services/reminderCron.js";
+import chatbotRoutes from "./routes/chatbotRoutes.js";
 
 
 // Load environment variables
@@ -35,6 +36,7 @@ app.use("/api/password", passwordRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/gemini", geminiRoutes);
 app.use("/api/reminders", reminderRoutes);
+app.use("/api/chatbot", chatbotRoutes);
 
 // Test Route
 app.get("/", (req, res) => {

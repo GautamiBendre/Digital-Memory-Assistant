@@ -5,6 +5,7 @@ import {
   MdOutlineCloudUpload,
   MdOutlineNotifications,
   MdOutlineLogout,
+  MdSmartToy,
 } from "react-icons/md";
 import { FiUser } from "react-icons/fi";
 import { PiWalletFill } from "react-icons/pi";
@@ -25,21 +26,27 @@ const Sidebar = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-  setShowLogoutModal(true);
-};
+    setShowLogoutModal(true);
+  };
 
-const confirmLogout = () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
+  const confirmLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
 
-  setShowLogoutModal(false);
+    setShowLogoutModal(false);
 
-  navigate("/");
-};
+    navigate("/");
+  };
 
-const cancelLogout = () => {
-  setShowLogoutModal(false);
-};
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
+  };
+
+  const openAssistant = () => {
+    window.dispatchEvent(
+      new CustomEvent("open-memoryvault-assistant")
+    );
+  };
 
   return (
     <aside className="w-48 bg-white border-r border-[#ECE8F7] flex flex-col p-2 shrink-0">
@@ -58,11 +65,12 @@ const cancelLogout = () => {
       {/* Navigation */}
       <nav className="flex-1 space-y-1">
         {navItems.map(({ label, path, icon: Icon }) => {
-         const isActive = location.pathname === path;
+          const isActive = location.pathname === path;
+
           return (
             <button
               key={label}
-            onClick={() => navigate(path)}
+              onClick={() => navigate(path)}
               className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm transition ${
                 isActive
                   ? "bg-purple-200 text-purple-600 font-semibold"
@@ -74,6 +82,15 @@ const cancelLogout = () => {
             </button>
           );
         })}
+
+        {/* AI Assistant */}
+        <button
+          onClick={openAssistant}
+          className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-slate-500 hover:bg-[#F8F7FC] transition"
+        >
+          <MdSmartToy className="w-4.5 h-4.5" />
+          AI Assistant
+        </button>
       </nav>
 
       {/* Logout */}
